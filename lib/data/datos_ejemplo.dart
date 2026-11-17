@@ -1,4 +1,4 @@
-// Datos de ejemplo fijos. No se guarda nada: es solo para poder navegar.
+// Modelos y datos de ejemplo. El estado que cambia vive en almacen.dart.
 
 class Producto {
   const Producto({
@@ -18,27 +18,28 @@ class Producto {
   final String descripcion;
 }
 
+/// Producto dentro de una lista, con sus unidades y si ya se ha cogido
+/// (marcado) en el modo compra.
 class LineaLista {
-  const LineaLista(this.producto, this.unidades);
+  LineaLista(this.producto, this.unidades, {this.marcada = false});
 
   final Producto producto;
-  final int unidades;
+  int unidades;
+  bool marcada;
 
   double get subtotal => producto.precio * unidades;
 }
 
 class ListaCompra {
-  const ListaCompra({
-    required this.id,
-    required this.nombre,
-    required this.lineas,
-  });
+  ListaCompra({required this.id, required this.nombre, required this.lineas});
 
   final String id;
   final String nombre;
   final List<LineaLista> lineas;
 
   double get total => lineas.fold(0, (suma, l) => suma + l.subtotal);
+  int get marcadas => lineas.where((l) => l.marcada).length;
+  bool get completa => lineas.isNotEmpty && marcadas == lineas.length;
 }
 
 const productosEjemplo = <Producto>[
@@ -108,7 +109,8 @@ const productosEjemplo = <Producto>[
   ),
 ];
 
-final listasEjemplo = <ListaCompra>[
+/// Listas con las que arranca la aplicación (nuevas en cada llamada).
+List<ListaCompra> crearListasEjemplo() => [
   ListaCompra(
     id: '1',
     nombre: 'Compra semanal',
@@ -130,13 +132,6 @@ final listasEjemplo = <ListaCompra>[
   ),
 ];
 
-ListaCompra? buscarLista(String id) {
-  for (final l in listasEjemplo) {
-    if (l.id == id) return l;
-  }
-  return null;
-}
-
 Producto? buscarProducto(String id) {
   for (final p in productosEjemplo) {
     if (p.id == id) return p;
@@ -147,6 +142,9 @@ Producto? buscarProducto(String id) {
 /// Formatea un precio al estilo español: «12,35 €».
 String formatearPrecio(double precio) =>
     '${precio.toStringAsFixed(2).replaceAll('.', ',')} €';
+
+/// «1 unidad» / «3 unidades».
+String contarUnidades(int n) => n == 1 ? '1 unidad' : '$n unidades';
 
 /// «1 producto» / «3 productos».
 String contarProductos(int n) => n == 1 ? '1 producto' : '$n productos';

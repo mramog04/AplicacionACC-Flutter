@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../data/datos_ejemplo.dart';
+import '../data/almacen.dart';
 import '../router.dart';
 import '../theme.dart';
+import '../widgets/avisos.dart';
 import '../widgets/controles.dart';
 import '../widgets/pantalla_base.dart';
 
 /// 3. Nueva lista: campo «Nombre de la lista», «Cancelar» arriba y
-/// «Crear lista» abajo. No guarda nada: navega a una lista vacía con el
-/// nombre escrito.
+/// «Crear lista» abajo. Crea la lista en memoria y abre la lista vacía.
 class NuevaListaScreen extends StatefulWidget {
   const NuevaListaScreen({super.key});
 
@@ -21,6 +21,8 @@ class _NuevaListaScreenState extends State<NuevaListaScreen> {
   final _nombre = TextEditingController();
   String? _error;
 
+  static const errorNombreVacio = 'Escribe un nombre para la lista.';
+
   @override
   void dispose() {
     _nombre.dispose();
@@ -30,24 +32,23 @@ class _NuevaListaScreenState extends State<NuevaListaScreen> {
   void _crear() {
     final nombre = _nombre.text.trim();
     if (nombre.isEmpty) {
-      setState(() => _error = 'Escribe un nombre para la lista.');
+      setState(() => _error = errorNombreVacio);
+      // El texto de error del campo ya es una región viva cuando la
+      // plataforma no admite anuncios; si los admite, se anuncia aquí. El
+      // foco no se mueve: se queda donde lo tenía el usuario.
+      anunciar(context, 'Error: $errorNombreVacio');
       return;
     }
-    // Id ficticio: la siguiente a las de ejemplo.
-    final id = '${listasEjemplo.length + 1}';
-    context.go(
-      Uri(
-        path: Rutas.lista(id),
-        queryParameters: {'nombre': nombre},
-      ).toString(),
-    );
+    final lista = almacen.crearLista(nombre);
+    mostrarAviso(context, 'Lista «$nombre» creada.');
+    context.go(Rutas.lista(lista.id));
   }
 
   @override
   Widget build(BuildContext context) {
     return PantallaBase(
       titulo: 'Nueva lista',
-      botonIzquierdo: BotonAtras(
+      botonIzquierdo: const BotonAtras(
         alternativa: Rutas.misListas,
         texto: 'Cancelar',
       ),

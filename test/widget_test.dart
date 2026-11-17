@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:lista_compra/data/almacen.dart';
 import 'package:lista_compra/main.dart';
 import 'package:lista_compra/router.dart';
+
+/// Desplaza hasta [f] (si hace falta) y lo toca.
+Future<void> tocarVisible(WidgetTester tester, Finder f) async {
+  await tester.ensureVisible(f);
+  await tester.pumpAndSettle();
+  await tester.tap(f);
+}
 
 /// Recorre las 7 pantallas siguiendo los caminos de navegación previstos.
 Future<void> recorrerPantallas(WidgetTester tester) async {
@@ -27,65 +35,78 @@ Future<void> recorrerPantallas(WidgetTester tester) async {
   );
 
   // → Ajustes y atrás
-  await tester.tap(find.text('Ajustes'));
+  await tocarVisible(tester, find.text('Ajustes'));
   await tester.pumpAndSettle();
   expect(find.text('Tamaño de texto'), findsOneWidget);
-  await tester.tap(find.text('Atrás'));
+  await tocarVisible(tester, find.text('Atrás'));
   await tester.pumpAndSettle();
 
   // → Nueva lista, cancelar
-  await tester.tap(find.text('Añadir lista'));
+  await tocarVisible(tester, find.text('Añadir lista'));
   await tester.pumpAndSettle();
   expect(find.text('Nombre de la lista'), findsOneWidget);
-  await tester.tap(find.text('Cancelar'));
+  await tocarVisible(tester, find.text('Cancelar'));
   await tester.pumpAndSettle();
   expect(find.text('Mis listas'), findsOneWidget);
 
   // → Nueva lista, crear → Lista
-  await tester.tap(find.text('Añadir lista'));
+  await tocarVisible(tester, find.text('Añadir lista'));
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Crear lista'));
+  await tocarVisible(tester, find.text('Crear lista'));
   await tester.pump();
   expect(find.text('Escribe un nombre para la lista.'), findsOneWidget);
   await tester.enterText(find.byType(TextField), 'Fiesta');
-  await tester.tap(find.text('Crear lista'));
+  await tocarVisible(tester, find.text('Crear lista'));
   await tester.pumpAndSettle();
   expect(find.text('Fiesta'), findsOneWidget);
-  await tester.tap(find.text('Atrás'));
+  await tocarVisible(tester, find.text('Atrás'));
   await tester.pumpAndSettle();
 
   // → Lista
-  await tester.tap(find.text('Compra semanal'));
+  await tocarVisible(tester, find.text('Compra semanal'));
   await tester.pumpAndSettle();
   expect(find.text('Total'), findsOneWidget);
 
-  // Lista → Detalle → atrás
-  await tester.tap(find.text('Leche entera'));
+  // Lista → Detalle (producto ya en la lista) → atrás
+  await tocarVisible(tester, find.text('Leche entera'));
   await tester.pumpAndSettle();
-  expect(find.text('Añadir a la lista'), findsOneWidget);
-  await tester.tap(find.text('Atrás'));
+  expect(find.text('Guardar unidades'), findsOneWidget);
+  await tocarVisible(tester, find.text('Atrás'));
   await tester.pumpAndSettle();
 
   // Lista → Buscar → Detalle → Lista (al añadir)
-  await tester.tap(find.text('+ Añadir producto'));
+  await tocarVisible(tester, find.text('+ Añadir producto'));
   await tester.pumpAndSettle();
   expect(find.text('8 resultados'), findsOneWidget);
   await tester.enterText(find.byType(TextField), 'queso');
   await tester.pump();
   expect(find.text('1 resultado'), findsOneWidget);
-  await tester.tap(find.text('Queso curado'));
+  await tocarVisible(tester, find.text('Queso curado'));
   await tester.pumpAndSettle();
-  await tester.scrollUntilVisible(find.byTooltip('Añadir una unidad'), 100);
-  await tester.tap(find.byTooltip('Añadir una unidad'));
+  // El ListView construye sus hijos al desplazarse: se baja hasta el botón.
+  await tester.scrollUntilVisible(
+    find.byTooltip('Aumentar unidades'),
+    100,
+    scrollable: find
+        .ancestor(of: find.text('Marca'), matching: find.byType(Scrollable))
+        .first,
+  );
+  await tocarVisible(tester, find.byTooltip('Aumentar unidades'));
   await tester.pump();
-  await tester.tap(find.text('Añadir a la lista'));
+  await tocarVisible(tester, find.text('Añadir a la lista'));
   await tester.pumpAndSettle();
   expect(find.text('Compra semanal'), findsOneWidget);
-  expect(find.text('Añadido: 2 × Queso curado'), findsOneWidget);
+  expect(
+    find.text('Añadido a la lista: 2 unidades de Queso curado.'),
+    findsOneWidget,
+  );
 }
 
 void main() {
-  setUp(() => appRouter.go(Rutas.carga));
+  setUp(() {
+    almacen.reiniciar();
+    appRouter.go(Rutas.carga);
+  });
 
   testWidgets('Navegación por las 7 pantallas', recorrerPantallas);
 

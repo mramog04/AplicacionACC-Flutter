@@ -43,10 +43,7 @@ final appRouter = GoRouter(
         GoRoute(path: 'nueva', builder: (_, _) => const NuevaListaScreen()),
         GoRoute(
           path: ':id',
-          builder: (_, state) => ListaScreen(
-            id: state.pathParameters['id']!,
-            nombreNueva: state.uri.queryParameters['nombre'],
-          ),
+          builder: (_, state) => ListaScreen(id: state.pathParameters['id']!),
           routes: [
             GoRoute(
               path: 'buscar',

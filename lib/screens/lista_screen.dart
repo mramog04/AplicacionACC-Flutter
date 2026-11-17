@@ -1,33 +1,89 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/almacen.dart';
 import '../data/datos_ejemplo.dart';
 import '../router.dart';
 import '../theme.dart';
+import '../widgets/avisos.dart';
 import '../widgets/controles.dart';
 import '../widgets/pantalla_base.dart';
 
-/// 4. Lista: título, total y productos. «Atrás» arriba; «+ Añadir producto»
-/// y «Terminar lista» abajo.
-class ListaScreen extends StatelessWidget {
-  const ListaScreen({super.key, required this.id, this.nombreNueva});
+/// 4. Lista: título, total y productos.
+///
+/// - Modo normal: «Atrás» y «Borrar lista» arriba; «+ Añadir producto» y
+///   «Terminar lista» abajo.
+/// - Modo compra (tras «Terminar lista»): cada producto es una casilla que se
+///   marca al cogerlo. Cuando están todos, aparece la confirmación abajo.
+class ListaScreen extends StatefulWidget {
+  const ListaScreen({super.key, required this.id});
 
   final String id;
 
-  /// Nombre recibido desde «Nueva lista» (la lista no existe en los datos).
-  final String? nombreNueva;
+  @override
+  State<ListaScreen> createState() => _ListaScreenState();
+}
+
+class _ListaScreenState extends State<ListaScreen> {
+  bool _modoCompra = false;
+
+  /// Copia de la lista mientras se borra, para que la pantalla no muestre
+  /// «Lista no encontrada» durante la animación de salida.
+  ListaCompra? _borrada;
+
+  Future<void> _borrar(ListaCompra lista) async {
+    final confirmado = await confirmarBorrado(context, lista);
+    if (confirmado != true || !mounted) return;
+    setState(() => _borrada = lista);
+    almacen.borrarLista(lista.id);
+    mostrarAviso(context, 'Lista «${lista.nombre}» borrada.');
+    context.go(Rutas.misListas);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final lista = buscarLista(id);
-    final nombre = lista?.nombre ?? nombreNueva ?? 'Nueva lista';
-    final lineas = lista?.lineas ?? const <LineaLista>[];
-    final total = lista?.total ?? 0;
-    final textos = Theme.of(context).textTheme;
+    return ListenableBuilder(
+      listenable: almacen,
+      builder: (context, _) {
+        final lista = almacen.lista(widget.id) ?? _borrada;
+        if (lista == null) {
+          return const PantallaBase(
+            titulo: 'Lista no encontrada',
+            botonIzquierdo: BotonAtras(alternativa: Rutas.misListas),
+            cuerpo: Padding(
+              padding: EdgeInsets.all(AppSizes.margen),
+              child: Text('Esta lista no existe o se ha borrado.'),
+            ),
+          );
+        }
+        return _modoCompra ? _compra(lista) : _normal(lista);
+      },
+    );
+  }
 
+  /// Botón que cambia entre modos. Lleva la misma clave en los dos para que
+  /// sea el mismo elemento: así, si tenía el foco, lo conserva.
+  Widget _botonModo(String texto, VoidCallback? alPulsar) => OutlinedButton(
+    key: const ValueKey('boton-modo'),
+    onPressed: alPulsar,
+    child: Text(texto),
+  );
+
+  Widget _normal(ListaCompra lista) {
+    final textos = Theme.of(context).textTheme;
+    final vacia = lista.lineas.isEmpty;
     return PantallaBase(
-      titulo: nombre,
+      titulo: lista.nombre,
       botonIzquierdo: const BotonAtras(alternativa: Rutas.misListas),
+      botonDerecho: OutlinedButton.icon(
+        onPressed: () => _borrar(lista),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.error,
+          iconColor: AppColors.error,
+        ),
+        icon: const Icon(Icons.delete_outline),
+        label: const Text('Borrar lista'),
+      ),
       cuerpo: ListaSeparada(
         children: [
           // Total: se lee como una sola frase.
@@ -35,25 +91,32 @@ class ListaScreen extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(child: Text('Total', style: textos.titleMedium)),
-                Text(formatearPrecio(total), style: textos.titleLarge),
+                Text(formatearPrecio(lista.total), style: textos.titleLarge),
               ],
             ),
           ),
-          Text(contarProductos(lineas.length), style: textos.bodySmall),
-          if (lineas.isEmpty)
+          Text(contarProductos(lista.lineas.length), style: textos.bodySmall),
+          if (vacia)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: AppSizes.margen),
               child: Text(
                 'La lista está vacía. Usa «+ Añadir producto» para empezar.',
               ),
             ),
-          for (final linea in lineas)
+          for (final linea in lista.lineas)
             BotonFila(
               titulo: linea.producto.nombre,
               subtitulo:
                   '${linea.unidades} × ${formatearPrecio(linea.producto.precio)}',
               extra: formatearPrecio(linea.subtotal),
-              alPulsar: () => context.go(Rutas.producto(id, linea.producto.id)),
+              // «6 × 0,95 €» se leería «6 por 0,95 euros» o «6 multiplicado
+              // por…»: se da una frase completa.
+              etiquetaSemantica:
+                  '${linea.producto.nombre}, ${contarUnidades(linea.unidades)} '
+                  'a ${formatearPrecio(linea.producto.precio)} cada una, '
+                  'subtotal ${formatearPrecio(linea.subtotal)}',
+              alPulsar: () =>
+                  context.push(Rutas.producto(lista.id, linea.producto.id)),
             ),
         ],
       ),
@@ -62,19 +125,187 @@ class ListaScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           FilledButton(
-            onPressed: () => context.go(Rutas.buscar(id)),
+            key: const ValueKey('boton-anadir'),
+            onPressed: () => context.push(Rutas.buscar(lista.id)),
             child: const Text('+ Añadir producto'),
           ),
           const SizedBox(height: AppSizes.separacion),
-          OutlinedButton(
-            // Sin lógica todavía.
-            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Terminar lista: pendiente.')),
+          _botonModo(
+            'Terminar lista',
+            vacia ? null : () => setState(() => _modoCompra = true),
+          ),
+          if (vacia) ...[
+            const SizedBox(height: 4),
+            // El estado deshabilitado se explica con texto, no solo con el
+            // color gris del botón.
+            Text(
+              'Añade productos para poder terminar la lista.',
+              style: textos.bodySmall,
             ),
-            child: const Text('Terminar lista'),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _compra(ListaCompra lista) {
+    final textos = Theme.of(context).textTheme;
+    final total = lista.lineas.length;
+    return PantallaBase(
+      titulo: lista.nombre,
+      botonIzquierdo: const BotonAtras(alternativa: Rutas.misListas),
+      cuerpo: ListaSeparada(
+        children: [
+          const Subtitulo('Modo compra'),
+          // Se anuncia al entrar en el modo: el cambio lo ha pedido el
+          // usuario, pero así sabe qué ha cambiado sin tener que explorar.
+          // El contador va aparte y no es región viva: cada casilla ya
+          // anuncia su estado al marcarla y repetirlo sería ruido.
+          const RegionViva(
+            mensaje: 'Modo compra. Marca cada producto cuando lo cojas.',
+            child: Text('Marca cada producto cuando lo cojas.'),
+          ),
+          Text('${lista.marcadas} de $total marcados', style: textos.bodySmall),
+          for (final linea in lista.lineas)
+            _CasillaProducto(
+              linea: linea,
+              alCambiar: (v) => almacen.marcar(lista.id, linea.producto.id, v),
+            ),
+        ],
+      ),
+      barraInferior: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (lista.completa) ...[
+            _Confirmacion(total: total),
+            const SizedBox(height: AppSizes.separacion),
+            FilledButton(
+              onPressed: () => context.go(Rutas.misListas),
+              child: const Text('Volver a Mis listas'),
+            ),
+            const SizedBox(height: AppSizes.separacion),
+          ],
+          _botonModo(
+            'Salir del modo compra',
+            () => setState(() => _modoCompra = false),
           ),
         ],
       ),
     );
   }
+}
+
+/// Casilla de un producto en el modo compra. CheckboxListTile ya da rol de
+/// casilla, estado marcado/no marcado y nombre (título + subtítulo); no hace
+/// falta Semantics. Visualmente, marcado = tic + texto tachado (no solo
+/// color).
+class _CasillaProducto extends StatelessWidget {
+  const _CasillaProducto({required this.linea, required this.alCambiar});
+
+  final LineaLista linea;
+  final ValueChanged<bool> alCambiar;
+
+  @override
+  Widget build(BuildContext context) {
+    final tachado = linea.marcada ? TextDecoration.lineThrough : null;
+    return AnilloFoco(
+      child: CheckboxListTile(
+        value: linea.marcada,
+        onChanged: (v) => alCambiar(v ?? false),
+        controlAffinity: ListTileControlAffinity.leading,
+        title: Text(
+          linea.producto.nombre,
+          style: TextStyle(decoration: tachado),
+        ),
+        subtitle: Text(
+          '${contarUnidades(linea.unidades)}, ${linea.producto.formato}',
+          style: TextStyle(decoration: tachado),
+        ),
+        shape: RoundedRectangleBorder(
+          side: BorderSide(
+            color: linea.marcada ? AppColors.acento : AppColors.bordeControles,
+            width: linea.marcada ? AppSizes.bordeFoco : AppSizes.bordeControl,
+          ),
+          borderRadius: BorderRadius.circular(AppSizes.radio),
+        ),
+      ),
+    );
+  }
+}
+
+/// Mensaje de compra completada: icono + texto + borde, en una región viva.
+class _Confirmacion extends StatelessWidget {
+  const _Confirmacion({required this.total});
+
+  final int total;
+
+  @override
+  Widget build(BuildContext context) {
+    final detalle = total == 1
+        ? 'Has marcado el único producto.'
+        : 'Has marcado los $total productos.';
+    return RegionViva(
+      mensaje: '¡Compra completada! $detalle',
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppColors.fondo,
+          border: Border.all(
+            color: AppColors.acento,
+            width: AppSizes.bordeFoco,
+          ),
+          borderRadius: BorderRadius.circular(AppSizes.radio),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              const Icon(Icons.check_circle, color: AppColors.acento, size: 32),
+              const SizedBox(width: AppSizes.separacion),
+              Expanded(
+                child: Text(
+                  '¡Compra completada!\n$detalle',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Diálogo de confirmación de «Borrar lista». Devuelve `true` si se confirma.
+/// El AlertDialog ya mueve el foco del lector al diálogo y lo anuncia.
+Future<bool?> confirmarBorrado(BuildContext context, ListaCompra lista) {
+  return showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text('¿Borrar «${lista.nombre}»?'),
+      content: Text(
+        'Se borrará la lista con ${contarProductos(lista.lineas.length)}. '
+        'No se puede deshacer.',
+      ),
+      actionsOverflowButtonSpacing: AppSizes.separacion,
+      actions: [
+        OutlinedButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton.icon(
+          onPressed: () => Navigator.of(context).pop(true),
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.error,
+            side: const BorderSide(
+              color: AppColors.error,
+              width: AppSizes.bordeControl,
+            ),
+          ),
+          icon: const Icon(Icons.delete_outline),
+          label: const Text('Sí, borrar'),
+        ),
+      ],
+    ),
+  );
 }
