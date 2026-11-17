@@ -1,0 +1,68 @@
+# Salida de: flutter test --reporter expanded   (2026-11-17 16:13, Flutter 3.47.9)
+00:00 +0: loading test/widget_test.dart
+00:00 +0: test/widget_test.dart: Navegación por las 7 pantallas
+00:01 +0: test/recorridos_test.dart: Recorrido 1: crear lista (texto ×1.0)
+00:01 +1: test/widget_test.dart: Navegación por las 7 pantallas
+00:01 +2: test/widget_test.dart: Navegación por las 7 pantallas
+00:01 +3: test/widget_test.dart: Navegación por las 7 pantallas
+00:01 +4: test/widget_test.dart: Navegación por las 7 pantallas
+00:02 +5: test/widget_test.dart: Navegación por las 7 pantallas
+00:02 +6: test/widget_test.dart: Navegación por las 7 pantallas
+00:02 +7: test/widget_test.dart: Navegación por las 7 pantallas
+00:02 +8: test/widget_test.dart: Navegación por las 7 pantallas
+00:02 +9: test/widget_test.dart: Navegación por las 7 pantallas
+00:02 +10: test/recorridos_test.dart: Recorrido 2: añadir producto (texto ×1.0)
+00:02 +11: test/recorridos_test.dart: Recorrido 2: añadir producto (texto ×1.0)
+00:02 +12: test/escalado_test.dart: Buscar producto sin desbordes y completa (texto ×2.0)
+00:03 +13: test/escalado_test.dart: Buscar producto sin desbordes y completa (texto ×2.0)
+00:03 +14: test/escalado_test.dart: Buscar producto sin desbordes y completa (texto ×2.0)
+00:03 +15: test/escalado_test.dart: Buscar producto sin desbordes y completa (texto ×2.0)
+00:03 +16: test/widget_test.dart: Navegación con texto al 200 % sin desbordes
+00:03 +16: test/recorridos_test.dart: Recorrido 1: crear lista (texto ×2.0)
+00:03 +17: test/widget_test.dart: Navegación con texto al 200 % sin desbordes
+00:03 +18: test/widget_test.dart: Navegación con texto al 200 % sin desbordes
+00:03 +19: test/widget_test.dart: Navegación con texto al 200 % sin desbordes
+00:03 +20: test/recorridos_test.dart: Recorrido 1: crear lista (texto ×2.0)
+00:03 +21: test/recorridos_test.dart: Recorrido 1: crear lista (texto ×2.0)
+00:03 +22: test/guias_test.dart: Detalle (producto nuevo) cumple las guías (texto ×1.0)
+00:03 +23: test/guias_test.dart: Detalle (producto nuevo) cumple las guías (texto ×1.0)
+00:04 +24: test/widget_test.dart: Un solo h1 por pantalla y controles de al menos 48×48
+00:04 +25: test/widget_test.dart: Un solo h1 por pantalla y controles de al menos 48×48
+00:04 +26: test/widget_test.dart: Un solo h1 por pantalla y controles de al menos 48×48
+00:04 +27: test/widget_test.dart: Un solo h1 por pantalla y controles de al menos 48×48
+00:04 +28: test/widget_test.dart: Un solo h1 por pantalla y controles de al menos 48×48
+00:04 +29: test/recorridos_test.dart: Recorrido 2: añadir producto (texto ×2.0)
+00:04 +30: test/recorridos_test.dart: Recorrido 2: añadir producto (texto ×2.0)
+00:04 +31: test/recorridos_test.dart: Recorrido 2: añadir producto (texto ×2.0)
+00:04 +32: test/recorridos_test.dart: Recorrido 2: añadir producto (texto ×2.0)
+00:04 +33: test/recorridos_test.dart: Recorrido 2: añadir producto (texto ×2.0)
+00:04 +34: test/recorridos_test.dart: Recorrido 2: añadir producto (texto ×2.0)
+00:04 +35: test/recorridos_test.dart: Recorrido 2: añadir producto (texto ×2.0)
+00:05 +36: test/recorridos_test.dart: Recorrido 2: añadir producto (texto ×2.0)
+00:05 +37: test/recorridos_test.dart: Recorrido 2: añadir producto (texto ×2.0)
+00:05 +38: test/escalado_test.dart: Buscar producto sin desbordes y completa (texto ×3.0)
+00:05 +39: test/escalado_test.dart: Buscar producto sin desbordes y completa (texto ×3.0)
+00:05 +40: test/escalado_test.dart: Buscar producto sin desbordes y completa (texto ×3.0)
+00:05 +41: test/escalado_test.dart: Buscar producto sin desbordes y completa (texto ×3.0)
+00:05 +42: test/recorridos_test.dart: Recorrido 3: hacer la compra (texto ×2.0)
+00:05 +43: test/recorridos_test.dart: Recorrido 3: hacer la compra (texto ×2.0)
+00:05 +44: test/recorridos_test.dart: Recorrido 3: hacer la compra (texto ×2.0)
+00:06 +45: test/recorridos_test.dart: Recorrido 3: hacer la compra (texto ×2.0)
+00:06 +46: test/semantica_test.dart: Sin anuncios de plataforma: regiones vivas error de nombre vacío
+00:06 +46: test/recorridos_test.dart: Recorrido 1: crear lista (texto ×3.0)
+00:06 +47: test/semantica_test.dart: Sin anuncios de plataforma: regiones vivas error de nombre vacío
+00:06 +48: test/semantica_test.dart: Sin anuncios de plataforma: regiones vivas error de nombre vacío
+00:06 +49: test/recorridos_test.dart: Recorrido 2: añadir producto (texto ×3.0)
+00:07 +50: test/recorridos_test.dart: Recorrido 2: añadir producto (texto ×3.0)
+00:07 +51: test/semantica_test.dart: Sin anuncios de plataforma: regiones vivas modo compra y compra completada
+00:07 +52: test/recorridos_test.dart: Recorrido 3: hacer la compra (texto ×3.0)
+00:07 +53: test/recorridos_test.dart: Recorrido 3: hacer la compra (texto ×3.0)
+00:08 +54: test/recorridos_test.dart: Recorrido 3: hacer la compra (texto ×3.0)
+00:08 +55: test/recorridos_test.dart: Recorrido 3: hacer la compra (texto ×3.0)
+00:08 +56: test/recorridos_test.dart: Recorrido 3: hacer la compra (texto ×3.0)
+00:08 +57: test/semantica_test.dart: Orden de lectura: lista en modo compra
+00:08 +58: test/recorridos_test.dart: Producto repetido: aviso y ficha con sus unidades
+00:08 +59: test/recorridos_test.dart: Producto repetido: aviso y ficha con sus unidades
+00:08 +60: test/recorridos_test.dart: Borrar lista pide confirmación
+00:08 +61: test/recorridos_test.dart: Lista vacía: «Terminar lista» deshabilitado y explicado
+00:08 +62: All tests passed!
