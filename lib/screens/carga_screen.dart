@@ -35,12 +35,18 @@ class CargaScreen extends StatelessWidget {
               ),
             ),
           ),
-          // El contenido deja pasar los toques al botón de debajo.
-          IgnorePointer(
-            child: SafeArea(
-              child: Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(AppSizes.margen),
+          // El contenido se puede desplazar (con el texto muy grande o en
+          // horizontal puede no caber) y tocarlo también continúa. El
+          // GestureDetector se excluye de la semántica: el botón ya es el de
+          // debajo y no debe aparecer dos veces.
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(AppSizes.margen),
+                child: GestureDetector(
+                  onTap: continuar,
+                  excludeFromSemantics: true,
+                  behavior: HitTestBehavior.opaque,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
