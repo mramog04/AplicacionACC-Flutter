@@ -90,9 +90,14 @@ void mostrarAviso(
   TipoAviso tipo = TipoAviso.exito,
 }) {
   final messenger = ScaffoldMessenger.of(context);
+  // Con el texto muy grande, el aviso flotante no cabe encima de la barra
+  // inferior y Flutter lo dejaría fuera de la pantalla (lo detectó la prueba
+  // al 300 %): se usa el aviso fijo, que siempre se coloca dentro del cuerpo.
+  final textoGrande = MediaQuery.textScalerOf(context).scale(1) >= 1.5;
   messenger.hideCurrentSnackBar();
   messenger.showSnackBar(
     SnackBar(
+      behavior: textoGrande ? SnackBarBehavior.fixed : null,
       content: Row(
         children: [
           Icon(tipo.icono, color: AppColors.blanco),

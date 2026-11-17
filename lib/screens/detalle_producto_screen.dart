@@ -61,10 +61,7 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
             ? 'Producto no encontrado'
             : 'Lista no encontrada',
         botonIzquierdo: atras,
-        cuerpo: const Padding(
-          padding: EdgeInsets.all(AppSizes.margen),
-          child: Text('No existe ese producto o esa lista.'),
-        ),
+        contenido: const [Text('No existe ese producto o esa lista.')],
       );
     }
 
@@ -73,53 +70,51 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
     return PantallaBase(
       titulo: producto.nombre,
       botonIzquierdo: atras,
-      cuerpo: ListView(
-        padding: const EdgeInsets.all(AppSizes.margen),
-        children: [
-          if (_enLista) ...[
-            Row(
-              children: [
-                const Icon(Icons.info_outline),
-                const SizedBox(width: AppSizes.separacion),
-                Expanded(
-                  child: Text(
-                    'Ya está en «${lista.nombre}» con '
-                    '${contarUnidades(_linea!.unidades)}.',
-                  ),
+      separacion: 0,
+      contenido: [
+        if (_enLista) ...[
+          Row(
+            children: [
+              const Icon(Icons.info_outline),
+              const SizedBox(width: AppSizes.separacion),
+              Expanded(
+                child: Text(
+                  'Ya está en «${lista.nombre}» con '
+                  '${contarUnidades(_linea!.unidades)}.',
                 ),
-              ],
-            ),
-            const SizedBox(height: AppSizes.margen),
-          ],
-          _Dato(etiqueta: 'Marca', valor: producto.marca),
-          _Dato(etiqueta: 'Formato', valor: producto.formato),
-          _Dato(etiqueta: 'Precio', valor: formatearPrecio(producto.precio)),
-          _Dato(etiqueta: 'Descripción', valor: producto.descripcion),
+              ),
+            ],
+          ),
           const SizedBox(height: AppSizes.margen),
-          const Subtitulo('Unidades'),
-          const SizedBox(height: AppSizes.separacion),
-          SelectorUnidades(
-            valor: _unidades,
-            alCambiar: (v) => setState(() => _unidades = v),
-          ),
-          if (_unidades == 1) ...[
-            const SizedBox(height: 4),
-            // Explica con texto por qué «−» está deshabilitado.
-            Text('Mínimo: 1 unidad.', style: textos.bodySmall),
-          ],
-          const SizedBox(height: AppSizes.separacion),
-          // Región viva: al pulsar «−»/«+» el lector anuncia las unidades y
-          // el subtotal sin que el foco se mueva del botón.
-          RegionViva(
-            mensaje: '${contarUnidades(_unidades)}. Subtotal: $subtotal',
-            anunciarAlAparecer: false,
-            child: Text(
-              'Subtotal (${contarUnidades(_unidades)}): $subtotal',
-              style: textos.bodyLarge,
-            ),
-          ),
         ],
-      ),
+        _Dato(etiqueta: 'Marca', valor: producto.marca),
+        _Dato(etiqueta: 'Formato', valor: producto.formato),
+        _Dato(etiqueta: 'Precio', valor: formatearPrecio(producto.precio)),
+        _Dato(etiqueta: 'Descripción', valor: producto.descripcion),
+        const SizedBox(height: AppSizes.margen),
+        const Subtitulo('Unidades'),
+        const SizedBox(height: AppSizes.separacion),
+        SelectorUnidades(
+          valor: _unidades,
+          alCambiar: (v) => setState(() => _unidades = v),
+        ),
+        if (_unidades == 1) ...[
+          const SizedBox(height: 4),
+          // Explica con texto por qué «−» está deshabilitado.
+          Text('Mínimo: 1 unidad.', style: textos.bodySmall),
+        ],
+        const SizedBox(height: AppSizes.separacion),
+        // Región viva: al pulsar «−»/«+» el lector anuncia las unidades y
+        // el subtotal sin que el foco se mueva del botón.
+        RegionViva(
+          mensaje: '${contarUnidades(_unidades)}. Subtotal: $subtotal',
+          anunciarAlAparecer: false,
+          child: Text(
+            'Subtotal (${contarUnidades(_unidades)}): $subtotal',
+            style: textos.bodyLarge,
+          ),
+        ),
+      ],
       barraInferior: FilledButton(
         onPressed: () => _confirmar(producto),
         child: Text(_enLista ? 'Guardar unidades' : 'Añadir a la lista'),

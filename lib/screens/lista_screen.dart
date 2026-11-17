@@ -50,10 +50,7 @@ class _ListaScreenState extends State<ListaScreen> {
           return const PantallaBase(
             titulo: 'Lista no encontrada',
             botonIzquierdo: BotonAtras(alternativa: Rutas.misListas),
-            cuerpo: Padding(
-              padding: EdgeInsets.all(AppSizes.margen),
-              child: Text('Esta lista no existe o se ha borrado.'),
-            ),
+            contenido: [Text('Esta lista no existe o se ha borrado.')],
           );
         }
         return _modoCompra ? _compra(lista) : _normal(lista);
@@ -84,42 +81,44 @@ class _ListaScreenState extends State<ListaScreen> {
         icon: const Icon(Icons.delete_outline),
         label: const Text('Borrar lista'),
       ),
-      cuerpo: ListaSeparada(
-        children: [
-          // Total: se lee como una sola frase.
-          MergeSemantics(
-            child: Row(
-              children: [
-                Expanded(child: Text('Total', style: textos.titleMedium)),
-                Text(formatearPrecio(lista.total), style: textos.titleLarge),
-              ],
+      contenido: [
+        // Total: se lee como una sola frase. Wrap: con el texto muy grande
+        // el importe baja a la línea siguiente en vez de desbordar.
+        MergeSemantics(
+          child: Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: AppSizes.separacion,
+            children: [
+              Text('Total', style: textos.titleMedium),
+              Text(formatearPrecio(lista.total), style: textos.titleLarge),
+            ],
+          ),
+        ),
+        Text(contarProductos(lista.lineas.length), style: textos.bodySmall),
+        if (vacia)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSizes.margen),
+            child: Text(
+              'La lista está vacía. Usa «+ Añadir producto» para empezar.',
             ),
           ),
-          Text(contarProductos(lista.lineas.length), style: textos.bodySmall),
-          if (vacia)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: AppSizes.margen),
-              child: Text(
-                'La lista está vacía. Usa «+ Añadir producto» para empezar.',
-              ),
-            ),
-          for (final linea in lista.lineas)
-            BotonFila(
-              titulo: linea.producto.nombre,
-              subtitulo:
-                  '${linea.unidades} × ${formatearPrecio(linea.producto.precio)}',
-              extra: formatearPrecio(linea.subtotal),
-              // «6 × 0,95 €» se leería «6 por 0,95 euros» o «6 multiplicado
-              // por…»: se da una frase completa.
-              etiquetaSemantica:
-                  '${linea.producto.nombre}, ${contarUnidades(linea.unidades)} '
-                  'a ${formatearPrecio(linea.producto.precio)} cada una, '
-                  'subtotal ${formatearPrecio(linea.subtotal)}',
-              alPulsar: () =>
-                  context.push(Rutas.producto(lista.id, linea.producto.id)),
-            ),
-        ],
-      ),
+        for (final linea in lista.lineas)
+          BotonFila(
+            titulo: linea.producto.nombre,
+            subtitulo:
+                '${linea.unidades} × ${formatearPrecio(linea.producto.precio)}',
+            extra: formatearPrecio(linea.subtotal),
+            // «6 × 0,95 €» se leería «6 por 0,95 euros» o «6 multiplicado
+            // por…»: se da una frase completa.
+            etiquetaSemantica:
+                '${linea.producto.nombre}, ${contarUnidades(linea.unidades)} '
+                'a ${formatearPrecio(linea.producto.precio)} cada una, '
+                'subtotal ${formatearPrecio(linea.subtotal)}',
+            alPulsar: () =>
+                context.push(Rutas.producto(lista.id, linea.producto.id)),
+          ),
+      ],
       barraInferior: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -154,25 +153,23 @@ class _ListaScreenState extends State<ListaScreen> {
     return PantallaBase(
       titulo: lista.nombre,
       botonIzquierdo: const BotonAtras(alternativa: Rutas.misListas),
-      cuerpo: ListaSeparada(
-        children: [
-          const Subtitulo('Modo compra'),
-          // Se anuncia al entrar en el modo: el cambio lo ha pedido el
-          // usuario, pero así sabe qué ha cambiado sin tener que explorar.
-          // El contador va aparte y no es región viva: cada casilla ya
-          // anuncia su estado al marcarla y repetirlo sería ruido.
-          const RegionViva(
-            mensaje: 'Modo compra. Marca cada producto cuando lo cojas.',
-            child: Text('Marca cada producto cuando lo cojas.'),
+      contenido: [
+        const Subtitulo('Modo compra'),
+        // Se anuncia al entrar en el modo: el cambio lo ha pedido el
+        // usuario, pero así sabe qué ha cambiado sin tener que explorar.
+        // El contador va aparte y no es región viva: cada casilla ya
+        // anuncia su estado al marcarla y repetirlo sería ruido.
+        const RegionViva(
+          mensaje: 'Modo compra. Marca cada producto cuando lo cojas.',
+          child: Text('Marca cada producto cuando lo cojas.'),
+        ),
+        Text('${lista.marcadas} de $total marcados', style: textos.bodySmall),
+        for (final linea in lista.lineas)
+          _CasillaProducto(
+            linea: linea,
+            alCambiar: (v) => almacen.marcar(lista.id, linea.producto.id, v),
           ),
-          Text('${lista.marcadas} de $total marcados', style: textos.bodySmall),
-          for (final linea in lista.lineas)
-            _CasillaProducto(
-              linea: linea,
-              alCambiar: (v) => almacen.marcar(lista.id, linea.producto.id, v),
-            ),
-        ],
-      ),
+      ],
       barraInferior: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -184,12 +181,14 @@ class _ListaScreenState extends State<ListaScreen> {
               onPressed: () => context.go(Rutas.misListas),
               child: const Text('Volver a Mis listas'),
             ),
-            const SizedBox(height: AppSizes.separacion),
           ],
-          _botonModo(
-            'Salir del modo compra',
-            () => setState(() => _modoCompra = false),
-          ),
+          // Con todo marcado, la salida es «Volver a Mis listas»; si se
+          // desmarca algo, vuelve a aparecer.
+          if (!lista.completa)
+            _botonModo(
+              'Salir del modo compra',
+              () => setState(() => _modoCompra = false),
+            ),
         ],
       ),
     );

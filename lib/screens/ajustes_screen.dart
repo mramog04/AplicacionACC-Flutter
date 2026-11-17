@@ -30,26 +30,24 @@ class _AjustesScreenState extends State<AjustesScreen> {
     return PantallaBase(
       titulo: 'Ajustes',
       botonIzquierdo: const BotonAtras(alternativa: Rutas.misListas),
-      cuerpo: ListView(
-        padding: const EdgeInsets.all(AppSizes.margen),
-        children: [
-          const Subtitulo('Idioma'),
-          const SizedBox(height: AppSizes.separacion),
-          _GrupoOpciones(
-            opciones: _idiomas,
-            valor: _idioma,
-            alCambiar: (v) => setState(() => _idioma = v),
-          ),
-          const SizedBox(height: AppSizes.margen * 2),
-          const Subtitulo('Tamaño de texto'),
-          const SizedBox(height: AppSizes.separacion),
-          _GrupoOpciones(
-            opciones: _tamanos,
-            valor: _tamano,
-            alCambiar: (v) => setState(() => _tamano = v),
-          ),
-        ],
-      ),
+      separacion: 0,
+      contenido: [
+        const Subtitulo('Idioma'),
+        const SizedBox(height: AppSizes.separacion),
+        _GrupoOpciones(
+          opciones: _idiomas,
+          valor: _idioma,
+          alCambiar: (v) => setState(() => _idioma = v),
+        ),
+        const SizedBox(height: AppSizes.margen * 2),
+        const Subtitulo('Tamaño de texto'),
+        const SizedBox(height: AppSizes.separacion),
+        _GrupoOpciones(
+          opciones: _tamanos,
+          valor: _tamano,
+          alCambiar: (v) => setState(() => _tamano = v),
+        ),
+      ],
     );
   }
 }

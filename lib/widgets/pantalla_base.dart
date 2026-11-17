@@ -60,7 +60,7 @@ class Subtitulo extends StatelessWidget {
 /// │ [izquierdo]        [derecho] │  barra superior (#F2F2F2)
 /// │ Título (h1)                  │
 /// ├──────────────────────────────┤
-/// │ cuerpo (desplazable)         │
+/// │ contenido (desplazable)      │
 /// ├──────────────────────────────┤
 /// │ barraInferior (opcional)     │  barra inferior (#F2F2F2)
 /// └──────────────────────────────┘
@@ -68,13 +68,22 @@ class Subtitulo extends StatelessWidget {
 /// El título va en su propia línea, debajo de los botones, para que con el
 /// texto al 200 % no tenga que competir por el ancho con ellos. Ninguna barra
 /// tiene altura fija: crecen con el texto. Para que con el texto muy grande
-/// (300 %) las barras no dejen sin sitio al cuerpo, cada una ocupa como
-/// mucho [fraccionMaxBarra] de la altura y, si no le cabe, se desplaza.
+/// no dejen sin sitio al contenido:
+/// - la barra inferior ocupa como mucho [fraccionMaxBarra] de la altura (si
+///   no le cabe, se desplaza dentro);
+/// - desde [escalaBarraDesplazable] la barra superior deja de ser fija y pasa
+///   a ser el primer elemento del desplazamiento, como un AppBar que se
+///   recoge. Se usa un único ListView (y no NestedScrollView) para que
+///   «mostrar en pantalla» (lo que hace TalkBack al mover el foco) funcione
+///   bien: con NestedScrollView la cabecera volvía a desplegarse y sacaba de
+///   la pantalla el elemento enfocado.
 class PantallaBase extends StatelessWidget {
   const PantallaBase({
     super.key,
     required this.titulo,
-    required this.cuerpo,
+    required this.contenido,
+    this.separacion = AppSizes.separacion,
+    this.margenInferior = AppSizes.margen,
     this.botonIzquierdo,
     this.botonDerecho,
     this.barraInferior,
@@ -82,74 +91,103 @@ class PantallaBase extends StatelessWidget {
   });
 
   final String titulo;
-  final Widget cuerpo;
+
+  /// Elementos del cuerpo, de arriba abajo.
+  final List<Widget> contenido;
+
+  /// Hueco vertical entre elementos del contenido.
+  final double separacion;
+
+  /// Espacio al final del contenido (p. ej. para que un botón flotante no
+  /// tape el último elemento).
+  final double margenInferior;
+
   final Widget? botonIzquierdo;
   final Widget? botonDerecho;
   final Widget? barraInferior;
   final Widget? botonFlotante;
 
   static const double fraccionMaxBarra = 0.35;
+  static const double escalaBarraDesplazable = 2;
 
   @override
   Widget build(BuildContext context) {
     final hayBotones = botonIzquierdo != null || botonDerecho != null;
     final altoMaxBarra = MediaQuery.sizeOf(context).height * fraccionMaxBarra;
-    Widget limitar(Widget barra) => ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: altoMaxBarra),
-      child: SingleChildScrollView(child: barra),
-    );
-    return Scaffold(
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          DecoratedBox(
-            decoration: const BoxDecoration(
-              color: AppColors.fondoBarras,
-              border: Border(bottom: BorderSide(color: AppColors.bordeSuave)),
-            ),
-            child: SafeArea(
-              bottom: false,
-              child: limitar(
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSizes.margen,
-                    AppSizes.separacion,
-                    AppSizes.margen,
-                    AppSizes.margen,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (hayBotones) ...[
-                        // Flexible (ajuste suelto) deja que el botón encoja si
-                        // el texto es muy grande; el hueco sobrante lo reparte
-                        // mainAxisAlignment, así el derecho queda a la derecha.
-                        Row(
-                          mainAxisAlignment: botonIzquierdo == null
-                              ? MainAxisAlignment.end
-                              : MainAxisAlignment.spaceBetween,
-                          children: [
-                            if (botonIzquierdo != null)
-                              Flexible(child: botonIzquierdo!),
-                            if (botonIzquierdo != null && botonDerecho != null)
-                              const SizedBox(width: AppSizes.separacion),
-                            if (botonDerecho != null)
-                              Flexible(child: botonDerecho!),
-                          ],
-                        ),
-                        const SizedBox(height: AppSizes.separacion),
-                      ] else
-                        const SizedBox(height: AppSizes.separacion),
-                      TituloPantalla(titulo),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Expanded(child: cuerpo),
-        ],
+    final barraDesplazable =
+        MediaQuery.textScalerOf(context).scale(1) >= escalaBarraDesplazable;
+
+    final barraSuperior = DecoratedBox(
+      decoration: const BoxDecoration(
+        color: AppColors.fondoBarras,
+        border: Border(bottom: BorderSide(color: AppColors.bordeSuave)),
       ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSizes.margen,
+            AppSizes.separacion,
+            AppSizes.margen,
+            AppSizes.margen,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (hayBotones) ...[
+                // Flexible (ajuste suelto) deja que el botón encoja si el
+                // texto es muy grande; el hueco sobrante lo reparte
+                // mainAxisAlignment, así el derecho queda a la derecha.
+                Row(
+                  mainAxisAlignment: botonIzquierdo == null
+                      ? MainAxisAlignment.end
+                      : MainAxisAlignment.spaceBetween,
+                  children: [
+                    if (botonIzquierdo != null)
+                      Flexible(child: botonIzquierdo!),
+                    if (botonIzquierdo != null && botonDerecho != null)
+                      const SizedBox(width: AppSizes.separacion),
+                    if (botonDerecho != null) Flexible(child: botonDerecho!),
+                  ],
+                ),
+                const SizedBox(height: AppSizes.separacion),
+              ] else
+                const SizedBox(height: AppSizes.separacion),
+              TituloPantalla(titulo),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final elementos = [
+      for (final (i, hijo) in contenido.indexed)
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+            AppSizes.margen,
+            i == 0 ? AppSizes.margen : separacion,
+            AppSizes.margen,
+            i == contenido.length - 1 ? margenInferior : 0,
+          ),
+          child: hijo,
+        ),
+    ];
+    final cuerpo = ListView(
+      // Sin SafeArea arriba si la barra va dentro: ya la aplica ella.
+      padding: EdgeInsets.zero,
+      children: [if (barraDesplazable) barraSuperior, ...elementos],
+    );
+
+    return Scaffold(
+      body: barraDesplazable
+          ? cuerpo
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                barraSuperior,
+                Expanded(child: cuerpo),
+              ],
+            ),
       bottomNavigationBar: barraInferior == null
           ? null
           : DecoratedBox(
@@ -159,8 +197,9 @@ class PantallaBase extends StatelessWidget {
               ),
               child: SafeArea(
                 top: false,
-                child: limitar(
-                  Padding(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxHeight: altoMaxBarra),
+                  child: SingleChildScrollView(
                     padding: const EdgeInsets.all(AppSizes.margen),
                     child: barraInferior,
                   ),

@@ -50,35 +50,32 @@ class _BuscarProductoScreenState extends State<BuscarProductoScreen> {
     final n = resultados.length;
     final textoResultados = n == 1 ? '1 resultado' : '$n resultados';
 
-    return PantallaBase(
-      titulo: 'Buscar producto',
-      botonIzquierdo: BotonAtras(alternativa: Rutas.lista(widget.idLista)),
-      cuerpo: ListenableBuilder(
-        listenable: almacen,
-        builder: (context, _) => ListaSeparada(
-          children: [
-            CampoTexto(
-              etiqueta: 'Buscar producto',
-              pista: 'Nombre o marca',
-              iconoPrefijo: Icons.search,
-              autofocus: true,
-              accionTeclado: TextInputAction.search,
-              alCambiar: (v) => setState(() => _consulta = v),
+    return ListenableBuilder(
+      listenable: almacen,
+      builder: (context, _) => PantallaBase(
+        titulo: 'Buscar producto',
+        botonIzquierdo: BotonAtras(alternativa: Rutas.lista(widget.idLista)),
+        contenido: [
+          CampoTexto(
+            etiqueta: 'Buscar producto',
+            pista: 'Nombre o marca',
+            iconoPrefijo: Icons.search,
+            autofocus: true,
+            accionTeclado: TextInputAction.search,
+            alCambiar: (v) => setState(() => _consulta = v),
+          ),
+          // Se anuncia al cambiar (no al abrir la pantalla).
+          RegionViva(
+            mensaje: textoResultados,
+            anunciarAlAparecer: false,
+            child: Text(
+              textoResultados,
+              style: Theme.of(context).textTheme.bodySmall,
             ),
-            // Se anuncia al cambiar (no al abrir la pantalla).
-            RegionViva(
-              mensaje: textoResultados,
-              anunciarAlAparecer: false,
-              child: Text(
-                textoResultados,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ),
-            if (n == 0)
-              Text('No hay productos que coincidan con «$_consulta».'),
-            for (final p in resultados) _resultado(p),
-          ],
-        ),
+          ),
+          if (n == 0) Text('No hay productos que coincidan con «$_consulta».'),
+          for (final p in resultados) _resultado(p),
+        ],
       ),
     );
   }

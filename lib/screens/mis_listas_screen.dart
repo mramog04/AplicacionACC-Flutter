@@ -25,49 +25,51 @@ class MisListasScreen extends StatelessWidget {
         (altoBoton > _ladoBotonAnadir ? altoBoton : _ladoBotonAnadir) +
         2 * AppSizes.margen;
 
-    return PantallaBase(
-      titulo: 'Mis listas',
-      botonDerecho: OutlinedButton.icon(
-        onPressed: () => context.push(Rutas.ajustes),
-        icon: const Icon(Icons.settings),
-        label: const Text('Ajustes'),
-      ),
-      cuerpo: ListenableBuilder(
-        listenable: almacen,
-        builder: (context, _) {
-          final listas = almacen.listas;
-          return ListaSeparada(
-            margenInferior: huecoFinal,
-            children: [
-              if (listas.isEmpty)
-                const Text(
-                  'Aún no tienes listas. Usa «Añadir lista» para crear una.',
-                ),
-              for (final lista in listas)
-                BotonFila(
-                  titulo: lista.nombre,
-                  subtitulo: contarProductos(lista.lineas.length),
-                  extra: formatearPrecio(lista.total),
-                  alPulsar: () => context.go(Rutas.lista(lista.id)),
-                ),
-            ],
-          );
-        },
-      ),
-      botonFlotante: FilledButton(
-        onPressed: () => context.go(Rutas.nuevaLista),
-        style: FilledButton.styleFrom(
-          minimumSize: const Size.square(_ladoBotonAnadir),
-          padding: const EdgeInsets.all(12),
-        ),
-        child: const Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.add, size: 32),
-            SizedBox(height: 4),
-            Text('Añadir lista', textAlign: TextAlign.center),
+    return ListenableBuilder(
+      listenable: almacen,
+      builder: (context, _) {
+        final listas = almacen.listas;
+        return PantallaBase(
+          titulo: 'Mis listas',
+          botonDerecho: OutlinedButton.icon(
+            onPressed: () => context.push(Rutas.ajustes),
+            icon: const Icon(Icons.settings),
+            label: const Text('Ajustes'),
+          ),
+          margenInferior: huecoFinal,
+          contenido: [
+            if (listas.isEmpty)
+              const Text(
+                'Aún no tienes listas. Usa «Añadir lista» para crear una.',
+              ),
+            for (final lista in listas)
+              BotonFila(
+                titulo: lista.nombre,
+                subtitulo: contarProductos(lista.lineas.length),
+                extra: formatearPrecio(lista.total),
+                alPulsar: () => context.go(Rutas.lista(lista.id)),
+              ),
           ],
-        ),
+          botonFlotante: _botonAnadir(context),
+        );
+      },
+    );
+  }
+
+  Widget _botonAnadir(BuildContext context) {
+    return FilledButton(
+      onPressed: () => context.go(Rutas.nuevaLista),
+      style: FilledButton.styleFrom(
+        minimumSize: const Size.square(_ladoBotonAnadir),
+        padding: const EdgeInsets.all(12),
+      ),
+      child: const Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.add, size: 32),
+          SizedBox(height: 4),
+          Text('Añadir lista', textAlign: TextAlign.center),
+        ],
       ),
     );
   }

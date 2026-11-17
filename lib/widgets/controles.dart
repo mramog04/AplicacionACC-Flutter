@@ -203,11 +203,11 @@ class SelectorUnidades extends StatelessWidget {
         children: [
           enOrden(
             0,
-            IconButton(
-              onPressed: puedeBajar ? bajar : null,
-              tooltip: 'Disminuir unidades',
-              style: estiloBoton,
-              icon: const Icon(Icons.remove),
+            _BotonIcono(
+              etiqueta: 'Disminuir unidades',
+              icono: Icons.remove,
+              alPulsar: puedeBajar ? bajar : null,
+              estilo: estiloBoton,
             ),
           ),
           enOrden(
@@ -240,14 +240,46 @@ class SelectorUnidades extends StatelessWidget {
           ),
           enOrden(
             2,
-            IconButton(
-              onPressed: subir,
-              tooltip: 'Aumentar unidades',
-              style: estiloBoton,
-              icon: const Icon(Icons.add),
+            _BotonIcono(
+              etiqueta: 'Aumentar unidades',
+              icono: Icons.add,
+              alPulsar: subir,
+              estilo: estiloBoton,
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Botón de solo icono con nombre accesible.
+///
+/// El nombre va en la etiqueta del icono (`semanticLabel`), que es lo que lee
+/// el lector. El tooltip (visible al mantener pulsado) se excluye de la
+/// semántica: si no, el nombre se leería dos veces.
+class _BotonIcono extends StatelessWidget {
+  const _BotonIcono({
+    required this.etiqueta,
+    required this.icono,
+    required this.alPulsar,
+    required this.estilo,
+  });
+
+  final String etiqueta;
+  final IconData icono;
+  final VoidCallback? alPulsar;
+  final ButtonStyle estilo;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: etiqueta,
+      excludeFromSemantics: true,
+      child: IconButton(
+        onPressed: alPulsar,
+        style: estilo,
+        icon: Icon(icono, semanticLabel: etiqueta),
       ),
     );
   }
@@ -284,31 +316,6 @@ class _AnilloFocoState extends State<AnilloFoco> {
         ),
         child: widget.child,
       ),
-    );
-  }
-}
-
-/// Lista vertical con 8 px de separación entre elementos y margen de 16 px.
-class ListaSeparada extends StatelessWidget {
-  const ListaSeparada({super.key, required this.children, this.margenInferior});
-
-  final List<Widget> children;
-
-  /// Espacio extra al final (p. ej. para que un botón flotante no tape nada).
-  final double? margenInferior;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.separated(
-      padding: EdgeInsets.fromLTRB(
-        AppSizes.margen,
-        AppSizes.margen,
-        AppSizes.margen,
-        margenInferior ?? AppSizes.margen,
-      ),
-      itemCount: children.length,
-      separatorBuilder: (_, _) => const SizedBox(height: AppSizes.separacion),
-      itemBuilder: (_, i) => children[i],
     );
   }
 }

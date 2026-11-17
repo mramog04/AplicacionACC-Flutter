@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 
 import '../data/almacen.dart';
 import '../router.dart';
-import '../theme.dart';
 import '../widgets/avisos.dart';
 import '../widgets/controles.dart';
 import '../widgets/pantalla_base.dart';
@@ -52,23 +51,21 @@ class _NuevaListaScreenState extends State<NuevaListaScreen> {
         alternativa: Rutas.misListas,
         texto: 'Cancelar',
       ),
-      cuerpo: ListView(
-        padding: const EdgeInsets.all(AppSizes.margen),
-        children: [
-          CampoTexto(
-            etiqueta: 'Nombre de la lista',
-            pista: 'Por ejemplo: Compra semanal',
-            controller: _nombre,
-            error: _error,
-            autofocus: true,
-            accionTeclado: TextInputAction.done,
-            alCambiar: (_) {
-              if (_error != null) setState(() => _error = null);
-            },
-            alEnviar: (_) => _crear(),
-          ),
-        ],
-      ),
+      separacion: 0,
+      contenido: [
+        CampoTexto(
+          etiqueta: 'Nombre de la lista',
+          pista: 'Por ejemplo: Compra semanal',
+          controller: _nombre,
+          error: _error,
+          autofocus: true,
+          accionTeclado: TextInputAction.done,
+          alCambiar: (_) {
+            if (_error != null) setState(() => _error = null);
+          },
+          alEnviar: (_) => _crear(),
+        ),
+      ],
       barraInferior: FilledButton(
         onPressed: _crear,
         child: const Text('Crear lista'),
