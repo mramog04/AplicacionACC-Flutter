@@ -1,0 +1,137 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:lista_compra/main.dart';
+import 'package:lista_compra/router.dart';
+
+/// Recorre las 7 pantallas siguiendo los caminos de navegación previstos.
+Future<void> recorrerPantallas(WidgetTester tester) async {
+  await tester.pumpWidget(const ListaCompraApp());
+  await tester.pump();
+
+  // 1. Carga → Mis listas (tocar la pantalla).
+  expect(find.text('Toca la pantalla para continuar'), findsOneWidget);
+  await tester.tapAt(const Offset(10, 10));
+  await tester.pumpAndSettle();
+
+  // 2. Mis listas
+  expect(find.text('Mis listas'), findsOneWidget);
+  expect(find.text('Compra semanal'), findsOneWidget);
+  expect(find.text('Cena del sábado'), findsOneWidget);
+  // «Ajustes» arriba a la derecha y «Añadir lista» abajo a la derecha.
+  final ancho = tester.view.physicalSize.width / tester.view.devicePixelRatio;
+  expect(tester.getRect(find.text('Ajustes')).right, greaterThan(ancho * 0.8));
+  expect(
+    tester.getRect(find.text('Añadir lista')).right,
+    greaterThan(ancho * 0.8),
+  );
+
+  // → Ajustes y atrás
+  await tester.tap(find.text('Ajustes'));
+  await tester.pumpAndSettle();
+  expect(find.text('Tamaño de texto'), findsOneWidget);
+  await tester.tap(find.text('Atrás'));
+  await tester.pumpAndSettle();
+
+  // → Nueva lista, cancelar
+  await tester.tap(find.text('Añadir lista'));
+  await tester.pumpAndSettle();
+  expect(find.text('Nombre de la lista'), findsOneWidget);
+  await tester.tap(find.text('Cancelar'));
+  await tester.pumpAndSettle();
+  expect(find.text('Mis listas'), findsOneWidget);
+
+  // → Nueva lista, crear → Lista
+  await tester.tap(find.text('Añadir lista'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Crear lista'));
+  await tester.pump();
+  expect(find.text('Escribe un nombre para la lista.'), findsOneWidget);
+  await tester.enterText(find.byType(TextField), 'Fiesta');
+  await tester.tap(find.text('Crear lista'));
+  await tester.pumpAndSettle();
+  expect(find.text('Fiesta'), findsOneWidget);
+  await tester.tap(find.text('Atrás'));
+  await tester.pumpAndSettle();
+
+  // → Lista
+  await tester.tap(find.text('Compra semanal'));
+  await tester.pumpAndSettle();
+  expect(find.text('Total'), findsOneWidget);
+
+  // Lista → Detalle → atrás
+  await tester.tap(find.text('Leche entera'));
+  await tester.pumpAndSettle();
+  expect(find.text('Añadir a la lista'), findsOneWidget);
+  await tester.tap(find.text('Atrás'));
+  await tester.pumpAndSettle();
+
+  // Lista → Buscar → Detalle → Lista (al añadir)
+  await tester.tap(find.text('+ Añadir producto'));
+  await tester.pumpAndSettle();
+  expect(find.text('8 resultados'), findsOneWidget);
+  await tester.enterText(find.byType(TextField), 'queso');
+  await tester.pump();
+  expect(find.text('1 resultado'), findsOneWidget);
+  await tester.tap(find.text('Queso curado'));
+  await tester.pumpAndSettle();
+  await tester.scrollUntilVisible(find.byTooltip('Añadir una unidad'), 100);
+  await tester.tap(find.byTooltip('Añadir una unidad'));
+  await tester.pump();
+  await tester.tap(find.text('Añadir a la lista'));
+  await tester.pumpAndSettle();
+  expect(find.text('Compra semanal'), findsOneWidget);
+  expect(find.text('Añadido: 2 × Queso curado'), findsOneWidget);
+}
+
+void main() {
+  setUp(() => appRouter.go(Rutas.carga));
+
+  testWidgets('Navegación por las 7 pantallas', recorrerPantallas);
+
+  testWidgets('Navegación con texto al 200 % sin desbordes', (tester) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await recorrerPantallas(tester);
+  });
+
+  testWidgets('Un solo h1 por pantalla y controles de al menos 48×48', (
+    tester,
+  ) async {
+    final semantica = tester.ensureSemantics();
+    await tester.pumpWidget(const ListaCompraApp());
+    for (final ruta in [
+      Rutas.carga,
+      Rutas.misListas,
+      Rutas.nuevaLista,
+      Rutas.lista('1'),
+      Rutas.buscar('1'),
+      Rutas.producto('1', 'p1'),
+      Rutas.ajustes,
+    ]) {
+      appRouter.go(ruta);
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      final h1 = find.byWidgetPredicate(
+        (w) => w is Semantics && w.properties.headingLevel == 1,
+      );
+      expect(h1, findsOneWidget, reason: ruta);
+      final controles = find.byWidgetPredicate(
+        (w) =>
+            w is ButtonStyleButton ||
+            w is IconButton ||
+            w is TextField ||
+            w is RadioListTile,
+      );
+      for (final e in controles.evaluate()) {
+        final tam = tester.getSize(find.byWidget(e.widget));
+        expect(
+          tam.width >= 48 && tam.height >= 48,
+          isTrue,
+          reason: '$ruta: ${e.widget.runtimeType} mide $tam',
+        );
+      }
+    }
+    semantica.dispose();
+  });
+}
