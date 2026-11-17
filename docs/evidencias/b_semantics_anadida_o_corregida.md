@@ -2,7 +2,7 @@
 
 ## 1. Selector de unidades (`SelectorUnidades`)
 
-**Archivo:** `lib/widgets/controles.dart`, líneas 164–254.
+**Archivo:** `lib/widgets/controles.dart`, líneas 169–259.
 
 **Problema.** Es un componente compuesto (− · número · +).
 - En la versión anterior, los botones se llamaban «Quitar una unidad» y «Añadir una unidad» solo mediante `tooltip`.
@@ -10,9 +10,9 @@
 - Además, Flutter ordenaba por geometría y leía el número **antes** que «−».
 
 **Qué se hizo.**
-- Los botones −/+ tienen nombre propio en la **etiqueta** del icono: «Disminuir unidades» y «Aumentar unidades» (`_BotonIcono`, línea 261). El tooltip sigue siendo visible al mantener pulsado, pero se excluye de la semántica (`excludeFromSemantics: true`, línea 278) para que el nombre no se lea dos veces.
-- El número es un nodo con `label: 'Unidades'` y `value: '3'` (línea 216). Además tiene `onIncrease`/`onDecrease` con `increasedValue`/`decreasedValue`, así que en TalkBack también se ajusta deslizando arriba/abajo, como un control deslizante. En el mínimo (1) no se ofrece la acción de bajar.
-- Las claves `OrdinalSortKey` (línea 195) fuerzan el orden visual: «−», «Unidades 1», «+».
+- Los botones −/+ tienen nombre propio en la **etiqueta** del icono: «Disminuir unidades» y «Aumentar unidades» (`_BotonIcono`, línea 266). El tooltip sigue siendo visible al mantener pulsado, pero se excluye de la semántica (`excludeFromSemantics: true`, línea 286) para que el nombre no se lea dos veces.
+- El número es un nodo con `label: 'Unidades'` y `value: '3'` (línea 221). Además tiene `onIncrease`/`onDecrease` con `increasedValue`/`decreasedValue`, así que en TalkBack también se ajusta deslizando arriba/abajo, como un control deslizante. En el mínimo (1) no se ofrece la acción de bajar.
+- Las claves `OrdinalSortKey` (línea 200) fuerzan el orden visual: «−», «Unidades 1», «+».
 - «−» deshabilitado en 1: además del estado semántico, se muestra el texto «Mínimo: 1 unidad.» para no depender solo del gris.
 - Al cambiar el valor, el lector anuncia «3 unidades. Subtotal: 12,30 €» mediante `RegionViva` (`lib/screens/detalle_producto_screen.dart`) **sin mover el foco** del botón.
 
@@ -20,7 +20,7 @@
 
 ## 2. Título de pantalla que no se anunciaba al navegar
 
-**Archivo:** `lib/widgets/pantalla_base.dart`, línea 31.
+**Archivo:** `lib/widgets/pantalla_base.dart`, línea 32.
 
 **Problema.** El título tenía `header: true`, pero la app no usa `AppBar`, que es quien normalmente marca el título con `namesRoute`. Sin eso, al cambiar de pantalla TalkBack no anunciaba en qué pantalla se estaba.
 
@@ -30,7 +30,7 @@
 
 ## 3. Fila de producto con «6 × 0,95 €»
 
-**Archivo:** `lib/screens/lista_screen.dart`, línea 114 (`etiquetaSemantica`), y `BotonFila` en `lib/widgets/controles.dart`, línea 142.
+**Archivo:** `lib/screens/lista_screen.dart`, línea 122 (`etiquetaSemantica`), y `BotonFila` en `lib/widgets/controles.dart`, línea 143.
 
 **Problema.** El texto visible «6 × 0,95 €» lo leería un lector como «6 por 0,95 euros» o «6 multiplicado por…», y el subtotal quedaba suelto.
 

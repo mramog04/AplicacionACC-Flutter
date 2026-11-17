@@ -2,7 +2,7 @@
 
 ## Caso: crear una lista sin nombre (recorrido 1)
 
-**Archivo:** `lib/screens/nueva_lista_screen.dart`, líneas 31–44.
+**Archivo:** `lib/screens/nueva_lista_screen.dart`, líneas 32–45.
 
 ```dart
 void _crear() {
@@ -20,7 +20,7 @@ void _crear() {
 
 - Aparece el texto «Escribe un nombre para la lista.» debajo del campo, en rojo #B00020. Se usa `errorText` de `InputDecoration`.
 - El borde del campo pasa a rojo.
-- Al final del campo aparece un **icono de error** (`Icons.error_outline`) que marca el error con la forma, además del color (`lib/widgets/controles.dart`, línea 76).
+- Al final del campo aparece un **icono de error** (`Icons.error_outline`) que marca el error con la forma, además del color (`lib/widgets/controles.dart`, línea 77).
 
 ### Para el lector de pantalla
 

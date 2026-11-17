@@ -2,7 +2,7 @@
 
 ## Casilla de producto en el modo compra: `CheckboxListTile`
 
-**Archivo:** `lib/screens/lista_screen.dart`, línea 212 (`_CasillaProducto`).
+**Archivo:** `lib/screens/lista_screen.dart`, línea 231 (`_CasillaProducto`).
 
 ```dart
 CheckboxListTile(
@@ -31,5 +31,5 @@ Lo único que se añadió fue la parte **visual** para no depender solo del colo
 
 ## Otros ejemplos
 
-- **Botones de texto** (`FilledButton` / `OutlinedButton`), por ejemplo «Crear lista» (`lib/screens/nueva_lista_screen.dart`, línea 69): el texto visible es el nombre, el rol es botón y el estado deshabilitado sale de `onPressed: null`. Este último caso se comprueba con «Terminar lista» en una lista vacía (`recorridos_test.dart`).
-- **`BotonFila`** (`lib/widgets/controles.dart`, línea 147): un `OutlinedButton` cuyo `Row` de textos se une en un solo nodo con rol de botón. El icono «›» es decorativo y, como no tiene `semanticLabel`, no genera nodo («Los iconos decorativos no generan nodos», en `semantica_test.dart`).
+- **Botones de texto** (`FilledButton` / `OutlinedButton`), por ejemplo «Crear lista» (`lib/screens/nueva_lista_screen.dart`, línea 73): el texto visible es el nombre, el rol es botón y el estado deshabilitado sale de `onPressed: null`. Este último caso se comprueba con «Terminar lista» en una lista vacía (`recorridos_test.dart`).
+- **`BotonFila`** (`lib/widgets/controles.dart`, línea 151): un `OutlinedButton` cuyo `Row` de textos se une en un solo nodo con rol de botón. El icono «›» es decorativo y, como no tiene `semanticLabel`, no genera nodo («Los iconos decorativos no generan nodos», en `semantica_test.dart`).

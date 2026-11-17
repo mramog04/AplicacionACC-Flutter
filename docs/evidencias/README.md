@@ -6,6 +6,7 @@
 | (b) Casos donde hubo que añadir o corregir `Semantics` | [b_semantics_anadida_o_corregida.md](b_semantics_anadida_o_corregida.md) |
 | (c) Orden de lectura esperado de pantallas relevantes | [c_orden_de_lectura.md](c_orden_de_lectura.md) |
 | (d) Mensaje de error y cómo se anuncia | [d_mensaje_de_error.md](d_mensaje_de_error.md) |
+| (e) Control por mirada (experimental): parámetros, limitaciones y cómo probarlo | [e_control_por_mirada.md](e_control_por_mirada.md) |
 | Resultado de la última ejecución de `flutter test` | [resultados_tests.txt](resultados_tests.txt) |
 
 ## Qué cubren las pruebas automáticas
@@ -17,6 +18,7 @@
 | `test/escalado_test.dart` | 7 pantallas con `textScaler` lineal 2,0 y 3,0 en un móvil de 412 × 915: sin desbordes, con todo el contenido alcanzable y sin controles tapados. |
 | `test/semantica_test.dart` | Regiones vivas cuando la plataforma no admite anuncios, que el foco no se mueve, un único h1 que nombra la ruta, el selector de unidades ajustable, el orden de lectura y que los iconos decorativos no generan nodos. |
 | `test/widget_test.dart` | El recorrido original por las 7 pantallas, al 100 % y 200 %, y el tamaño mínimo de 48 × 48. |
+| `test/gaze_*_test.dart` | El control por mirada con muestras simuladas, sin cámara (ver (e)). |
 
 ## Lo que NO está verificado aquí
 

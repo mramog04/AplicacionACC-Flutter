@@ -8,6 +8,8 @@ App en Flutter con los 3 recorridos críticos accesibles con lector de pantalla 
 
 Los datos se guardan **en memoria**: no hay backend ni base de datos, y al cerrar la app se vuelve a las listas de ejemplo.
 
+En la versión web hay además un **control por mirada experimental**, desactivado por defecto (*Ajustes → Control por mirada*). Se describe en [`docs/evidencias/e_control_por_mirada.md`](docs/evidencias/e_control_por_mirada.md).
+
 ## Ejecutar
 
 ```bash
@@ -21,7 +23,7 @@ Para comprobar el texto aumentado en Android: *Ajustes → Accesibilidad → Tam
 ## Tests
 
 ```bash
-flutter test                         # todo (62 pruebas)
+flutter test                         # todo
 flutter test test/recorridos_test.dart
 flutter analyze
 ```
@@ -33,6 +35,7 @@ flutter analyze
 | `test/escalado_test.dart` | Cada pantalla clave a 2,0 y 3,0 sin overflow y con todo el contenido alcanzable |
 | `test/semantica_test.dart` | Regiones vivas o anuncios, foco, títulos, selector de unidades y orden de lectura |
 | `test/widget_test.dart` | Navegación por las 7 pantallas |
+| `test/gaze_*_test.dart` | Control por mirada con muestras simuladas (sin cámara) |
 
 Las evidencias de accesibilidad (semántica, orden de lectura, mensajes de error y salida de los tests) están en [`docs/evidencias/`](docs/evidencias/README.md).
 
@@ -48,8 +51,10 @@ lib/
 │   ├── pantalla_base.dart     Esqueleto de pantalla: barras, título h1 (namesRoute), «Atrás»
 │   ├── controles.dart         CampoTexto, BotonFila, SelectorUnidades, AnilloFoco
 │   └── avisos.dart            anunciar(), RegionViva, mostrarAviso() (SnackBar)
+├── gaze/                      Control por mirada (solo web): config, GazeController,
+│                              fuentes (ratón / WebGazer), GazeTarget, ajustes
 └── screens/                   Una pantalla por archivo (carga, mis listas, nueva lista,
-                               lista, buscar, detalle, ajustes)
+                               lista, buscar, detalle, ajustes, calibración)
 ```
 
 Decisiones de accesibilidad principales:
