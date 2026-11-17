@@ -3,6 +3,9 @@ import 'package:go_router/go_router.dart';
 
 import '../data/almacen.dart';
 import '../data/datos_ejemplo.dart';
+import '../gaze/gaze_config.dart';
+import '../gaze/gaze_settings.dart';
+import '../gaze/gaze_target.dart';
 import '../router.dart';
 import '../theme.dart';
 import '../widgets/avisos.dart';
@@ -94,9 +97,19 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
         const SizedBox(height: AppSizes.margen),
         const Subtitulo('Unidades'),
         const SizedBox(height: AppSizes.separacion),
-        SelectorUnidades(
-          valor: _unidades,
-          alCambiar: (v) => setState(() => _unidades = v),
+        // Con el modo mirada, botones más grandes y más separados.
+        ListenableBuilder(
+          listenable: mirada,
+          builder: (context, _) => SelectorUnidades(
+            valor: _unidades,
+            alCambiar: (v) => setState(() => _unidades = v),
+            separacion: mirada.activo
+                ? GazeConfig.separacionMirada
+                : AppSizes.separacion,
+            tamanoBoton: mirada.activo
+                ? GazeConfig.ladoBotonMirada
+                : AppSizes.minControl,
+          ),
         ),
         if (_unidades == 1) ...[
           const SizedBox(height: 4),
@@ -115,9 +128,13 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
           ),
         ),
       ],
-      barraInferior: FilledButton(
-        onPressed: () => _confirmar(producto),
-        child: Text(_enLista ? 'Guardar unidades' : 'Añadir a la lista'),
+      barraInferior: GazeTarget(
+        etiqueta: _enLista ? 'Guardar unidades' : 'Añadir a la lista',
+        alActivar: () => _confirmar(producto),
+        child: FilledButton(
+          onPressed: () => _confirmar(producto),
+          child: Text(_enLista ? 'Guardar unidades' : 'Añadir a la lista'),
+        ),
       ),
     );
   }

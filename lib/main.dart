@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'gaze/gaze_target.dart';
 import 'router.dart';
 import 'theme.dart';
 
@@ -20,6 +21,8 @@ class ListaCompraApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
       routerConfig: appRouter,
+      // Capa del control por mirada (experimental, desactivado por defecto).
+      builder: (context, child) => CapaMirada(child: child!),
       locale: const Locale('es'),
       supportedLocales: const [Locale('es'), Locale('en')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,

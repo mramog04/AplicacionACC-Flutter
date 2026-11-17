@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../gaze/gaze_settings.dart';
 import '../router.dart';
 import '../theme.dart';
+import '../widgets/avisos.dart';
 import '../widgets/controles.dart';
 import '../widgets/pantalla_base.dart';
 
-/// 7. Ajustes: idioma y tamaño de texto. Solo maqueta: la selección se
-/// guarda en el estado de la pantalla y no se aplica todavía.
+/// 7. Ajustes: idioma y tamaño de texto (solo maqueta: la selección se
+/// guarda en el estado de la pantalla y no se aplica todavía) y el control
+/// por mirada experimental (solo web, desactivado por defecto).
 class AjustesScreen extends StatefulWidget {
   const AjustesScreen({super.key});
 
@@ -47,6 +51,169 @@ class _AjustesScreenState extends State<AjustesScreen> {
           valor: _tamano,
           alCambiar: (v) => setState(() => _tamano = v),
         ),
+        const SizedBox(height: AppSizes.margen * 2),
+        const Subtitulo('Control por mirada'),
+        const SizedBox(height: AppSizes.separacion),
+        ListenableBuilder(
+          listenable: mirada,
+          builder: (context, _) =>
+              _SeccionMirada(alElegirCamara: () => _elegirCamara(context)),
+        ),
+      ],
+    );
+  }
+
+  /// Antes de encender la cámara, aviso de privacidad (una vez).
+  Future<void> _elegirCamara(BuildContext context) async {
+    if (!mirada.privacidadAceptada) {
+      final acepta = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Uso de la cámara'),
+          content: const Text(
+            'Para estimar hacia dónde miras, la app usa la cámara con '
+            'WebGazer.js. El vídeo se procesa solo en este navegador: no se '
+            'graba, no se guarda y no sale del dispositivo. Puedes '
+            'desactivarlo cuando quieras desde Ajustes.',
+          ),
+          actionsOverflowButtonSpacing: AppSizes.separacion,
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Aceptar y usar la cámara'),
+            ),
+          ],
+        ),
+      );
+      if (acepta != true) return;
+      mirada.privacidadAceptada = true;
+    }
+    await mirada.usarFuente(FuenteMirada.camara);
+  }
+}
+
+/// Interruptor, fuente de la mirada y ajustes de cada fuente.
+class _SeccionMirada extends StatelessWidget {
+  const _SeccionMirada({required this.alElegirCamara});
+
+  final VoidCallback alElegirCamara;
+
+  static const _fuentes = {
+    'raton': 'Ratón con temblor simulado (pruebas)',
+    'camara': 'Cámara (WebGazer)',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final textos = Theme.of(context).textTheme;
+    final borde = RoundedRectangleBorder(
+      side: const BorderSide(
+        color: AppColors.bordeControles,
+        width: AppSizes.bordeControl,
+      ),
+      borderRadius: BorderRadius.circular(AppSizes.radio),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (!mirada.disponible) ...[
+          Text(
+            'Solo disponible en la versión web (navegador).',
+            style: textos.bodySmall,
+          ),
+          const SizedBox(height: AppSizes.separacion),
+        ],
+        AnilloFoco(
+          child: SwitchListTile(
+            title: const Text('Control por mirada (experimental)'),
+            subtitle: const Text(
+              'Activa un botón mirándolo durante 1,5 segundos.',
+            ),
+            value: mirada.activo,
+            onChanged: mirada.disponible ? mirada.activar : null,
+            shape: borde,
+          ),
+        ),
+        if (mirada.activo) ...[
+          const SizedBox(height: AppSizes.margen),
+          Text('Fuente de la mirada', style: textos.titleSmall),
+          const SizedBox(height: AppSizes.separacion),
+          _GrupoOpciones(
+            opciones: _fuentes,
+            valor: mirada.fuente.name,
+            alCambiar: (v) => v == 'camara'
+                ? alElegirCamara()
+                : mirada.usarFuente(FuenteMirada.raton),
+          ),
+          if (mirada.esperandoCamara) ...[
+            const SizedBox(height: AppSizes.separacion),
+            // Estado de carga: se ve (indicador + texto) y se anuncia.
+            const RegionViva(
+              mensaje:
+                  'Esperando el permiso de la cámara. Mientras tanto se usa '
+                  'el ratón.',
+              child: Row(
+                children: [
+                  SizedBox.square(
+                    dimension: 24,
+                    child: CircularProgressIndicator(strokeWidth: 3),
+                  ),
+                  SizedBox(width: AppSizes.separacion),
+                  Expanded(
+                    child: Text(
+                      'Esperando el permiso de la cámara… Mientras tanto '
+                      'se usa el ratón.',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          if (mirada.motivoSinCamara != null) ...[
+            const SizedBox(height: AppSizes.separacion),
+            RegionViva(
+              mensaje:
+                  'No se puede usar la cámara: ${mirada.motivoSinCamara} '
+                  'Se usa el ratón.',
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: AppColors.error),
+                  const SizedBox(width: AppSizes.separacion),
+                  Expanded(
+                    child: Text(
+                      'No se puede usar la cámara: '
+                      '${mirada.motivoSinCamara} Se usa el ratón.',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: AppSizes.margen),
+          if (mirada.fuente == FuenteMirada.raton) ...[
+            Text(
+              'Temblor simulado: ${mirada.ruidoRaton.round()} px',
+              style: textos.titleSmall,
+            ),
+            Slider(
+              value: mirada.ruidoRaton,
+              max: 150,
+              divisions: 15,
+              label: '${mirada.ruidoRaton.round()} px',
+              semanticFormatterCallback: (v) => '${v.round()} píxeles',
+              onChanged: (v) => mirada.ruidoRaton = v,
+            ),
+          ] else
+            OutlinedButton.icon(
+              onPressed: () => context.push(Rutas.calibracion),
+              icon: const Icon(Icons.center_focus_strong),
+              label: const Text('Calibrar (9 puntos)'),
+            ),
+        ],
       ],
     );
   }

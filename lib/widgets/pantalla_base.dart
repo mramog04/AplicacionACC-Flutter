@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../gaze/gaze_target.dart';
 import '../theme.dart';
 
 /// Vuelve a la pantalla anterior; si no la hay (p. ej. se entró por URL),
@@ -225,10 +226,15 @@ class BotonAtras extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: () => volver(context, alternativa),
-      icon: const Icon(Icons.arrow_back),
-      label: Text(texto),
+    void accion() => volver(context, alternativa);
+    return GazeTarget(
+      etiqueta: texto,
+      alActivar: accion,
+      child: OutlinedButton.icon(
+        onPressed: accion,
+        icon: const Icon(Icons.arrow_back),
+        label: Text(texto),
+      ),
     );
   }
 }

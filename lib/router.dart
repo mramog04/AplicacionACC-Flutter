@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 
 import 'screens/ajustes_screen.dart';
 import 'screens/buscar_producto_screen.dart';
+import 'screens/calibracion_screen.dart';
 import 'screens/carga_screen.dart';
 import 'screens/detalle_producto_screen.dart';
 import 'screens/lista_screen.dart';
@@ -15,6 +16,7 @@ abstract final class Rutas {
   static const misListas = '/listas';
   static const nuevaLista = '/listas/nueva';
   static const ajustes = '/ajustes';
+  static const calibracion = '/ajustes/calibracion';
   static String lista(String id) => '/listas/$id';
   static String buscar(String id) => '/listas/$id/buscar';
   static String producto(String id, String pid) => '/listas/$id/producto/$pid';
@@ -31,6 +33,7 @@ abstract final class Rutas {
 ///   /listas/:id/buscar             Buscar producto
 ///   /listas/:id/producto/:pid      Detalle de producto
 ///   /ajustes                       Ajustes
+///   /ajustes/calibracion           Calibración de la cámara (modo mirada)
 final appRouter = GoRouter(
   initialLocation: Rutas.carga,
   routes: [
@@ -61,6 +64,15 @@ final appRouter = GoRouter(
         ),
       ],
     ),
-    GoRoute(path: Rutas.ajustes, builder: (_, _) => const AjustesScreen()),
+    GoRoute(
+      path: Rutas.ajustes,
+      builder: (_, _) => const AjustesScreen(),
+      routes: [
+        GoRoute(
+          path: 'calibracion',
+          builder: (_, _) => const CalibracionScreen(),
+        ),
+      ],
+    ),
   ],
 );

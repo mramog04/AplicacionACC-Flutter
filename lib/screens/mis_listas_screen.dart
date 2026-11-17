@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../data/almacen.dart';
 import '../data/datos_ejemplo.dart';
+import '../gaze/gaze_target.dart';
 import '../router.dart';
 import '../theme.dart';
 import '../widgets/controles.dart';
@@ -31,10 +32,14 @@ class MisListasScreen extends StatelessWidget {
         final listas = almacen.listas;
         return PantallaBase(
           titulo: 'Mis listas',
-          botonDerecho: OutlinedButton.icon(
-            onPressed: () => context.push(Rutas.ajustes),
-            icon: const Icon(Icons.settings),
-            label: const Text('Ajustes'),
+          botonDerecho: GazeTarget(
+            etiqueta: 'Ajustes',
+            alActivar: () => context.push(Rutas.ajustes),
+            child: OutlinedButton.icon(
+              onPressed: () => context.push(Rutas.ajustes),
+              icon: const Icon(Icons.settings),
+              label: const Text('Ajustes'),
+            ),
           ),
           margenInferior: huecoFinal,
           contenido: [
@@ -57,19 +62,23 @@ class MisListasScreen extends StatelessWidget {
   }
 
   Widget _botonAnadir(BuildContext context) {
-    return FilledButton(
-      onPressed: () => context.go(Rutas.nuevaLista),
-      style: FilledButton.styleFrom(
-        minimumSize: const Size.square(_ladoBotonAnadir),
-        padding: const EdgeInsets.all(12),
-      ),
-      child: const Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.add, size: 32),
-          SizedBox(height: 4),
-          Text('Añadir lista', textAlign: TextAlign.center),
-        ],
+    return GazeTarget(
+      etiqueta: 'Añadir lista',
+      alActivar: () => context.go(Rutas.nuevaLista),
+      child: FilledButton(
+        onPressed: () => context.go(Rutas.nuevaLista),
+        style: FilledButton.styleFrom(
+          minimumSize: const Size.square(_ladoBotonAnadir),
+          padding: const EdgeInsets.all(12),
+        ),
+        child: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.add, size: 32),
+            SizedBox(height: 4),
+            Text('Añadir lista', textAlign: TextAlign.center),
+          ],
+        ),
       ),
     );
   }

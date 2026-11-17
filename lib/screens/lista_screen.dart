@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import '../data/almacen.dart';
 import '../data/datos_ejemplo.dart';
+import '../gaze/gaze_settings.dart';
+import '../gaze/gaze_target.dart';
 import '../router.dart';
 import '../theme.dart';
 import '../widgets/avisos.dart';
@@ -43,7 +45,8 @@ class _ListaScreenState extends State<ListaScreen> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: almacen,
+      // También el modo mirada: cambia la separación de los botones.
+      listenable: Listenable.merge([almacen, mirada]),
       builder: (context, _) {
         final lista = almacen.lista(widget.id) ?? _borrada;
         if (lista == null) {
@@ -60,10 +63,11 @@ class _ListaScreenState extends State<ListaScreen> {
 
   /// Botón que cambia entre modos. Lleva la misma clave en los dos para que
   /// sea el mismo elemento: así, si tenía el foco, lo conserva.
-  Widget _botonModo(String texto, VoidCallback? alPulsar) => OutlinedButton(
+  Widget _botonModo(String texto, VoidCallback? alPulsar) => GazeTarget(
     key: const ValueKey('boton-modo'),
-    onPressed: alPulsar,
-    child: Text(texto),
+    etiqueta: texto,
+    alActivar: alPulsar,
+    child: OutlinedButton(onPressed: alPulsar, child: Text(texto)),
   );
 
   Widget _normal(ListaCompra lista) {
@@ -72,14 +76,18 @@ class _ListaScreenState extends State<ListaScreen> {
     return PantallaBase(
       titulo: lista.nombre,
       botonIzquierdo: const BotonAtras(alternativa: Rutas.misListas),
-      botonDerecho: OutlinedButton.icon(
-        onPressed: () => _borrar(lista),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.error,
-          iconColor: AppColors.error,
+      botonDerecho: GazeTarget(
+        etiqueta: 'Borrar lista',
+        alActivar: () => _borrar(lista),
+        child: OutlinedButton.icon(
+          onPressed: () => _borrar(lista),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.error,
+            iconColor: AppColors.error,
+          ),
+          icon: const Icon(Icons.delete_outline),
+          label: const Text('Borrar lista'),
         ),
-        icon: const Icon(Icons.delete_outline),
-        label: const Text('Borrar lista'),
       ),
       contenido: [
         // Total: se lee como una sola frase. Wrap: con el texto muy grande
@@ -123,12 +131,16 @@ class _ListaScreenState extends State<ListaScreen> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          FilledButton(
+          GazeTarget(
             key: const ValueKey('boton-anadir'),
-            onPressed: () => context.push(Rutas.buscar(lista.id)),
-            child: const Text('+ Añadir producto'),
+            etiqueta: '+ Añadir producto',
+            alActivar: () => context.push(Rutas.buscar(lista.id)),
+            child: FilledButton(
+              onPressed: () => context.push(Rutas.buscar(lista.id)),
+              child: const Text('+ Añadir producto'),
+            ),
           ),
-          const SizedBox(height: AppSizes.separacion),
+          SizedBox(height: mirada.separacionBotones),
           _botonModo(
             'Terminar lista',
             vacia ? null : () => setState(() => _modoCompra = true),
@@ -176,10 +188,14 @@ class _ListaScreenState extends State<ListaScreen> {
         children: [
           if (lista.completa) ...[
             _Confirmacion(total: total),
-            const SizedBox(height: AppSizes.separacion),
-            FilledButton(
-              onPressed: () => context.go(Rutas.misListas),
-              child: const Text('Volver a Mis listas'),
+            SizedBox(height: mirada.separacionBotones),
+            GazeTarget(
+              etiqueta: 'Volver a Mis listas',
+              alActivar: () => context.go(Rutas.misListas),
+              child: FilledButton(
+                onPressed: () => context.go(Rutas.misListas),
+                child: const Text('Volver a Mis listas'),
+              ),
             ),
           ],
           // Con todo marcado, la salida es «Volver a Mis listas»; si se
@@ -208,25 +224,31 @@ class _CasillaProducto extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tachado = linea.marcada ? TextDecoration.lineThrough : null;
-    return AnilloFoco(
-      child: CheckboxListTile(
-        value: linea.marcada,
-        onChanged: (v) => alCambiar(v ?? false),
-        controlAffinity: ListTileControlAffinity.leading,
-        title: Text(
-          linea.producto.nombre,
-          style: TextStyle(decoration: tachado),
-        ),
-        subtitle: Text(
-          '${contarUnidades(linea.unidades)}, ${linea.producto.formato}',
-          style: TextStyle(decoration: tachado),
-        ),
-        shape: RoundedRectangleBorder(
-          side: BorderSide(
-            color: linea.marcada ? AppColors.acento : AppColors.bordeControles,
-            width: linea.marcada ? AppSizes.bordeFoco : AppSizes.bordeControl,
+    return GazeTarget(
+      etiqueta: linea.producto.nombre,
+      alActivar: () => alCambiar(!linea.marcada),
+      child: AnilloFoco(
+        child: CheckboxListTile(
+          value: linea.marcada,
+          onChanged: (v) => alCambiar(v ?? false),
+          controlAffinity: ListTileControlAffinity.leading,
+          title: Text(
+            linea.producto.nombre,
+            style: TextStyle(decoration: tachado),
           ),
-          borderRadius: BorderRadius.circular(AppSizes.radio),
+          subtitle: Text(
+            '${contarUnidades(linea.unidades)}, ${linea.producto.formato}',
+            style: TextStyle(decoration: tachado),
+          ),
+          shape: RoundedRectangleBorder(
+            side: BorderSide(
+              color: linea.marcada
+                  ? AppColors.acento
+                  : AppColors.bordeControles,
+              width: linea.marcada ? AppSizes.bordeFoco : AppSizes.bordeControl,
+            ),
+            borderRadius: BorderRadius.circular(AppSizes.radio),
+          ),
         ),
       ),
     );
@@ -277,34 +299,69 @@ class _Confirmacion extends StatelessWidget {
 
 /// Diálogo de confirmación de «Borrar lista». Devuelve `true` si se confirma.
 /// El AlertDialog ya mueve el foco del lector al diálogo y lo anuncia.
+///
+/// En modo mirada, «Sí, borrar» necesita un segundo paso: la primera
+/// activación por mirada lo cambia a «Confirmar borrado» y hay que apartar
+/// la vista y volver a mirarlo. Con toque o teclado basta una pulsación (el
+/// diálogo ya es la confirmación).
 Future<bool?> confirmarBorrado(BuildContext context, ListaCompra lista) {
+  var armado = false;
   return showDialog<bool>(
     context: context,
-    builder: (context) => AlertDialog(
-      title: Text('¿Borrar «${lista.nombre}»?'),
-      content: Text(
-        'Se borrará la lista con ${contarProductos(lista.lineas.length)}. '
-        'No se puede deshacer.',
-      ),
-      actionsOverflowButtonSpacing: AppSizes.separacion,
-      actions: [
-        OutlinedButton(
-          onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Cancelar'),
-        ),
-        FilledButton.icon(
-          onPressed: () => Navigator.of(context).pop(true),
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.error,
-            side: const BorderSide(
-              color: AppColors.error,
-              width: AppSizes.bordeControl,
-            ),
+    builder: (context) => StatefulBuilder(
+      builder: (context, setState) {
+        void cancelar() => Navigator.of(context).pop(false);
+        void borrar() => Navigator.of(context).pop(true);
+        void borrarPorMirada() {
+          if (armado) return borrar();
+          setState(() => armado = true);
+          anunciar(
+            context,
+            'Segundo paso: aparta la vista y mira otra vez «Confirmar '
+            'borrado» para borrar la lista.',
+          );
+        }
+
+        return AlertDialog(
+          title: Text('¿Borrar «${lista.nombre}»?'),
+          content: Text(
+            armado
+                ? 'Mira otra vez «Confirmar borrado» para borrar la lista. '
+                      'No se puede deshacer.'
+                : 'Se borrará la lista con '
+                      '${contarProductos(lista.lineas.length)}. '
+                      'No se puede deshacer.',
           ),
-          icon: const Icon(Icons.delete_outline),
-          label: const Text('Sí, borrar'),
-        ),
-      ],
+          actionsOverflowButtonSpacing: mirada.separacionBotones,
+          actions: [
+            GazeTarget(
+              etiqueta: 'Cancelar',
+              alActivar: cancelar,
+              child: OutlinedButton(
+                onPressed: cancelar,
+                child: const Text('Cancelar'),
+              ),
+            ),
+            if (mirada.activo) SizedBox(width: mirada.separacionBotones),
+            GazeTarget(
+              etiqueta: armado ? 'Confirmar borrado' : 'Sí, borrar',
+              alActivar: borrarPorMirada,
+              child: FilledButton.icon(
+                onPressed: borrar,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.error,
+                  side: const BorderSide(
+                    color: AppColors.error,
+                    width: AppSizes.bordeControl,
+                  ),
+                ),
+                icon: const Icon(Icons.delete_outline),
+                label: Text(armado ? 'Confirmar borrado' : 'Sí, borrar'),
+              ),
+            ),
+          ],
+        );
+      },
     ),
   );
 }

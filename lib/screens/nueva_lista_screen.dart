@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/almacen.dart';
+import '../gaze/gaze_target.dart';
 import '../router.dart';
 import '../widgets/avisos.dart';
 import '../widgets/controles.dart';
@@ -66,9 +67,13 @@ class _NuevaListaScreenState extends State<NuevaListaScreen> {
           alEnviar: (_) => _crear(),
         ),
       ],
-      barraInferior: FilledButton(
-        onPressed: _crear,
-        child: const Text('Crear lista'),
+      barraInferior: GazeTarget(
+        etiqueta: 'Crear lista',
+        alActivar: _crear,
+        child: FilledButton(
+          onPressed: _crear,
+          child: const Text('Crear lista'),
+        ),
       ),
     );
   }

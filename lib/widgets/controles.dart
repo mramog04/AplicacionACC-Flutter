@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
+import '../gaze/gaze_target.dart';
 import '../theme.dart';
 
 /// Campo de texto con la etiqueta siempre visible encima.
@@ -144,13 +145,17 @@ class BotonFila extends StatelessWidget {
         child: ExcludeSemantics(child: contenido),
       );
     }
-    return OutlinedButton(
-      onPressed: alPulsar,
-      style: OutlinedButton.styleFrom(
-        alignment: AlignmentDirectional.centerStart,
-        padding: const EdgeInsets.all(AppSizes.margen),
+    return GazeTarget(
+      etiqueta: titulo,
+      alActivar: alPulsar,
+      child: OutlinedButton(
+        onPressed: alPulsar,
+        style: OutlinedButton.styleFrom(
+          alignment: AlignmentDirectional.centerStart,
+          padding: const EdgeInsets.all(AppSizes.margen),
+        ),
+        child: contenido,
       ),
-      child: contenido,
     );
   }
 }
@@ -273,13 +278,17 @@ class _BotonIcono extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: etiqueta,
-      excludeFromSemantics: true,
-      child: IconButton(
-        onPressed: alPulsar,
-        style: estilo,
-        icon: Icon(icono, semanticLabel: etiqueta),
+    return GazeTarget(
+      etiqueta: etiqueta,
+      alActivar: alPulsar,
+      child: Tooltip(
+        message: etiqueta,
+        excludeFromSemantics: true,
+        child: IconButton(
+          onPressed: alPulsar,
+          style: estilo,
+          icon: Icon(icono, semanticLabel: etiqueta),
+        ),
       ),
     );
   }
