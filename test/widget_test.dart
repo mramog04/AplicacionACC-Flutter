@@ -95,7 +95,13 @@ Future<void> recorrerPantallas(WidgetTester tester) async {
   await tester.pump();
   await tocarVisible(tester, find.text('Añadir a la lista'));
   await tester.pumpAndSettle();
-  expect(find.text('Compra semanal'), findsOneWidget);
+  // De vuelta en la lista. (Con texto ≥200 % el título se desplaza con el
+  // contenido y la lista conserva su scroll, así que puede no estar a la
+  // vista: se comprueba la ruta.)
+  expect(
+    appRouter.routerDelegate.currentConfiguration.uri.toString(),
+    Rutas.lista('1'),
+  );
   expect(
     find.text('Añadido a la lista: 2 unidades de Queso curado.'),
     findsOneWidget,
