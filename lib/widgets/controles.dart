@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 
 import '../theme.dart';
 
@@ -71,6 +72,10 @@ class _CampoTextoState extends State<CampoTexto> {
             decoration: InputDecoration(
               hintText: widget.pista,
               errorText: widget.error,
+              // El error se marca también con un icono, no solo con el rojo.
+              suffixIcon: widget.error == null
+                  ? null
+                  : const Icon(Icons.error_outline, color: AppColors.error),
               prefixIcon: widget.iconoPrefijo == null
                   ? null
                   : Icon(widget.iconoPrefijo),
@@ -85,6 +90,10 @@ class _CampoTextoState extends State<CampoTexto> {
 /// Fila pulsable de una lista (lista de la compra, producto, resultado…).
 /// Es un botón secundario a lo ancho, con título, subtítulo opcional y
 /// un texto a la derecha opcional (precio).
+///
+/// El OutlinedButton ya junta todos los textos en un único nodo con rol de
+/// botón; [etiquetaSemantica] solo hace falta cuando lo visible se leería
+/// mal (p. ej. «6 × 0,95 €»).
 class BotonFila extends StatelessWidget {
   const BotonFila({
     super.key,
@@ -92,40 +101,152 @@ class BotonFila extends StatelessWidget {
     required this.alPulsar,
     this.subtitulo,
     this.extra,
+    this.etiquetaSemantica,
   });
 
   final String titulo;
   final String? subtitulo;
   final String? extra;
+  final String? etiquetaSemantica;
   final VoidCallback alPulsar;
 
   @override
   Widget build(BuildContext context) {
     final textos = Theme.of(context).textTheme;
+    // Con el texto muy grande el precio baja a su propia línea para que el
+    // título no se quede en una columna estrecha.
+    final textoGrande = MediaQuery.textScalerOf(context).scale(1) >= 2;
+    final textosFila = [
+      Text(titulo, style: textos.titleMedium),
+      if (subtitulo != null) Text(subtitulo!, style: textos.bodySmall),
+      if (extra != null && textoGrande) Text(extra!, style: textos.titleMedium),
+    ];
+    Widget contenido = Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: textosFila,
+          ),
+        ),
+        if (extra != null && !textoGrande) ...[
+          const SizedBox(width: AppSizes.separacion),
+          Text(extra!, style: textos.titleMedium),
+        ],
+        const SizedBox(width: AppSizes.separacion),
+        // Decorativo: sin etiqueta, no genera nodo semántico.
+        const Icon(Icons.chevron_right, color: AppColors.textoPrincipal),
+      ],
+    );
+    if (etiquetaSemantica != null) {
+      contenido = Semantics(
+        label: etiquetaSemantica,
+        child: ExcludeSemantics(child: contenido),
+      );
+    }
     return OutlinedButton(
       onPressed: alPulsar,
       style: OutlinedButton.styleFrom(
         alignment: AlignmentDirectional.centerStart,
         padding: const EdgeInsets.all(AppSizes.margen),
       ),
-      child: Row(
+      child: contenido,
+    );
+  }
+}
+
+/// Selector de unidades: «−», valor y «+».
+///
+/// Semántica: dos botones con nombre propio («Disminuir unidades» /
+/// «Aumentar unidades») y, entre ellos, un nodo «Unidades» con el valor
+/// actual que además se puede ajustar deslizando arriba/abajo (TalkBack) como
+/// un control deslizante.
+class SelectorUnidades extends StatelessWidget {
+  const SelectorUnidades({
+    super.key,
+    required this.valor,
+    required this.alCambiar,
+    this.minimo = 1,
+    this.separacion = AppSizes.separacion,
+    this.tamanoBoton = AppSizes.minControl,
+  });
+
+  final int valor;
+  final int minimo;
+  final ValueChanged<int> alCambiar;
+
+  /// Hueco entre «−», valor y «+» (mayor en el modo mirada).
+  final double separacion;
+
+  /// Lado mínimo de los botones «−» y «+».
+  final double tamanoBoton;
+
+  @override
+  Widget build(BuildContext context) {
+    final puedeBajar = valor > minimo;
+    void bajar() => alCambiar(valor - 1);
+    void subir() => alCambiar(valor + 1);
+    final estiloBoton = IconButton.styleFrom(
+      minimumSize: Size.square(tamanoBoton),
+    );
+    // Sin claves de orden, Flutter ordena por geometría y leía el valor antes
+    // que «−». Se fuerza el orden visual: «−», valor, «+».
+    Widget enOrden(double orden, Widget hijo) =>
+        Semantics(sortKey: OrdinalSortKey(orden), child: hijo);
+    return Semantics(
+      container: true,
+      explicitChildNodes: true,
+      child: Wrap(
+        spacing: separacion,
+        runSpacing: separacion,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(titulo, style: textos.titleMedium),
-                if (subtitulo != null)
-                  Text(subtitulo!, style: textos.bodySmall),
-              ],
+          enOrden(
+            0,
+            IconButton(
+              onPressed: puedeBajar ? bajar : null,
+              tooltip: 'Disminuir unidades',
+              style: estiloBoton,
+              icon: const Icon(Icons.remove),
             ),
           ),
-          if (extra != null) ...[
-            const SizedBox(width: AppSizes.separacion),
-            Text(extra!, style: textos.titleMedium),
-          ],
-          const SizedBox(width: AppSizes.separacion),
-          const Icon(Icons.chevron_right, color: AppColors.textoPrincipal),
+          enOrden(
+            1,
+            Semantics(
+              label: 'Unidades',
+              value: '$valor',
+              increasedValue: '${valor + 1}',
+              decreasedValue: puedeBajar ? '${valor - 1}' : null,
+              onIncrease: subir,
+              onDecrease: puedeBajar ? bajar : null,
+              child: ExcludeSemantics(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minWidth: AppSizes.minControl,
+                    minHeight: AppSizes.minControl,
+                  ),
+                  child: Center(
+                    widthFactor: 1,
+                    heightFactor: 1,
+                    child: Text(
+                      '$valor',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          enOrden(
+            2,
+            IconButton(
+              onPressed: subir,
+              tooltip: 'Aumentar unidades',
+              style: estiloBoton,
+              icon: const Icon(Icons.add),
+            ),
+          ),
         ],
       ),
     );

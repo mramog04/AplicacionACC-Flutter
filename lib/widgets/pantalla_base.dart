@@ -14,6 +14,9 @@ void volver(BuildContext context, String alternativa) {
 }
 
 /// Título único de la pantalla (h1).
+///
+/// `namesRoute` hace que el lector de pantalla lo lea al llegar a la
+/// pantalla, igual que el título de un AppBar (aquí no se usa AppBar).
 class TituloPantalla extends StatelessWidget {
   const TituloPantalla(this.texto, {super.key, this.centrado = false});
 
@@ -25,6 +28,7 @@ class TituloPantalla extends StatelessWidget {
     return Semantics(
       header: true,
       headingLevel: 1,
+      namesRoute: true,
       child: Text(
         texto,
         textAlign: centrado ? TextAlign.center : TextAlign.start,
@@ -63,7 +67,9 @@ class Subtitulo extends StatelessWidget {
 ///
 /// El título va en su propia línea, debajo de los botones, para que con el
 /// texto al 200 % no tenga que competir por el ancho con ellos. Ninguna barra
-/// tiene altura fija: crecen con el texto.
+/// tiene altura fija: crecen con el texto. Para que con el texto muy grande
+/// (300 %) las barras no dejen sin sitio al cuerpo, cada una ocupa como
+/// mucho [fraccionMaxBarra] de la altura y, si no le cabe, se desplaza.
 class PantallaBase extends StatelessWidget {
   const PantallaBase({
     super.key,
@@ -82,9 +88,16 @@ class PantallaBase extends StatelessWidget {
   final Widget? barraInferior;
   final Widget? botonFlotante;
 
+  static const double fraccionMaxBarra = 0.35;
+
   @override
   Widget build(BuildContext context) {
     final hayBotones = botonIzquierdo != null || botonDerecho != null;
+    final altoMaxBarra = MediaQuery.sizeOf(context).height * fraccionMaxBarra;
+    Widget limitar(Widget barra) => ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: altoMaxBarra),
+      child: SingleChildScrollView(child: barra),
+    );
     return Scaffold(
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -96,38 +109,40 @@ class PantallaBase extends StatelessWidget {
             ),
             child: SafeArea(
               bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSizes.margen,
-                  AppSizes.separacion,
-                  AppSizes.margen,
-                  AppSizes.margen,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (hayBotones) ...[
-                      // Flexible (ajuste suelto) deja que el botón encoja si
-                      // el texto es muy grande; el hueco sobrante lo reparte
-                      // mainAxisAlignment, así el derecho queda a la derecha.
-                      Row(
-                        mainAxisAlignment: botonIzquierdo == null
-                            ? MainAxisAlignment.end
-                            : MainAxisAlignment.spaceBetween,
-                        children: [
-                          if (botonIzquierdo != null)
-                            Flexible(child: botonIzquierdo!),
-                          if (botonIzquierdo != null && botonDerecho != null)
-                            const SizedBox(width: AppSizes.separacion),
-                          if (botonDerecho != null)
-                            Flexible(child: botonDerecho!),
-                        ],
-                      ),
-                      const SizedBox(height: AppSizes.separacion),
-                    ] else
-                      const SizedBox(height: AppSizes.separacion),
-                    TituloPantalla(titulo),
-                  ],
+              child: limitar(
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSizes.margen,
+                    AppSizes.separacion,
+                    AppSizes.margen,
+                    AppSizes.margen,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (hayBotones) ...[
+                        // Flexible (ajuste suelto) deja que el botón encoja si
+                        // el texto es muy grande; el hueco sobrante lo reparte
+                        // mainAxisAlignment, así el derecho queda a la derecha.
+                        Row(
+                          mainAxisAlignment: botonIzquierdo == null
+                              ? MainAxisAlignment.end
+                              : MainAxisAlignment.spaceBetween,
+                          children: [
+                            if (botonIzquierdo != null)
+                              Flexible(child: botonIzquierdo!),
+                            if (botonIzquierdo != null && botonDerecho != null)
+                              const SizedBox(width: AppSizes.separacion),
+                            if (botonDerecho != null)
+                              Flexible(child: botonDerecho!),
+                          ],
+                        ),
+                        const SizedBox(height: AppSizes.separacion),
+                      ] else
+                        const SizedBox(height: AppSizes.separacion),
+                      TituloPantalla(titulo),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -144,9 +159,11 @@ class PantallaBase extends StatelessWidget {
               ),
               child: SafeArea(
                 top: false,
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSizes.margen),
-                  child: barraInferior,
+                child: limitar(
+                  Padding(
+                    padding: const EdgeInsets.all(AppSizes.margen),
+                    child: barraInferior,
+                  ),
                 ),
               ),
             ),
