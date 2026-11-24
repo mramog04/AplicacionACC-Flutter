@@ -17,6 +17,9 @@ abstract class GazeSource {
 
   Future<void> detener();
 
+  /// Empieza una calibración nueva: olvida lo aprendido antes.
+  void empezarCalibracion() {}
+
   /// Calibración: el usuario mira y hace clic en [posicion]. Solo la usa la
   /// cámara; las demás fuentes no hacen nada.
   void registrarCalibracion(Offset posicion);
@@ -79,6 +82,9 @@ class MouseGazeSource implements GazeSource {
     _timer?.cancel();
     _timer = null;
   }
+
+  @override
+  void empezarCalibracion() {}
 
   @override
   void registrarCalibracion(Offset posicion) {}

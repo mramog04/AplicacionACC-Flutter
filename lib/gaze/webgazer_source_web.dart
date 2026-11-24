@@ -20,6 +20,7 @@ extension type _WebGazer._(JSObject _) implements JSObject {
   external JSPromise<JSAny?> begin();
   external void end();
   external void stopVideo();
+  external JSPromise<JSAny?> clearData();
   external _WebGazer removeMouseEventListeners();
   external _Parametros get params;
   external _WebGazer showVideoPreview(bool v);
@@ -58,8 +59,17 @@ class WebGazerGazeSource implements GazeSource {
   @override
   Stream<Offset> get muestras => _controlador.stream;
 
+  Future<void>? _arranque;
+
+  /// Dos arranques a la vez rompen MediaPipe («abort(undefined)») hasta
+  /// recargar: si ya hay uno en marcha, se espera a ese.
   @override
   Future<void> iniciar() async {
+    if (_iniciada) return;
+    await (_arranque ??= _arrancar().whenComplete(() => _arranque = null));
+  }
+
+  Future<void> _arrancar() async {
     if (!_contextoSeguro) {
       throw FuenteNoDisponible(
         'La cámara solo se puede usar desde https o localhost.',
@@ -108,7 +118,12 @@ class WebGazerGazeSource implements GazeSource {
     if (error.contains('NotReadableError')) {
       return 'La cámara está ocupada por otra aplicación.';
     }
-    return 'WebGazer no ha podido arrancar ($error).';
+    if (error.contains('abort')) {
+      return 'El modelo facial ha fallado. Recarga la página para reintentarlo.';
+    }
+    final corto = error.split('\n').first;
+    return 'WebGazer no ha podido arrancar '
+        '(${corto.length > 100 ? corto.substring(0, 100) : corto}).';
   }
 
   /// Apaga la cámara. `end()` por sí solo no la apaga: para el bucle y quita
@@ -133,6 +148,11 @@ class WebGazerGazeSource implements GazeSource {
     final wg = _webgazer;
     if (wg != null && _iniciada) _apagar(wg);
     _iniciada = false;
+  }
+
+  @override
+  void empezarCalibracion() {
+    if (_iniciada) _webgazer?.clearData();
   }
 
   /// Punto de calibración: el usuario mira y hace clic en [posicion].

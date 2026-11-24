@@ -62,6 +62,13 @@ abstract final class GazeConfig {
   static const double ladoMinimoMirada = 88;
   static const double separacionMirada = 72;
 
+  /// Con el modo activo en pantallas de al menos [anchoMinimoConMargen], la
+  /// app se aparta del borde esta fracción del ancho y del alto: en los bordes
+  /// y esquinas la estimación de la mirada es peor.
+  static const double anchoMinimoConMargen = 600;
+  static const double margenHorizontalMirada = 0.06;
+  static const double margenVerticalMirada = 0.03;
+
   /// Ancho del carril con los botones «Subir» y «Bajar» (la mirada no puede
   /// arrastrar la pantalla) y parte visible que desplaza cada activación.
   static const double anchoCarrilMirada = 96;

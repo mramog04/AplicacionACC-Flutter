@@ -190,12 +190,21 @@ class CapaMirada extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    mirada.pantalla = MediaQuery.sizeOf(context);
     return Listener(
       behavior: HitTestBehavior.translucent,
       onPointerHover: _puntero,
       onPointerMove: _puntero,
       onPointerDown: _puntero,
-      child: child,
+      child: ColoredBox(
+        color: AppColors.fondoBarras,
+        child: ListenableBuilder(
+          listenable: mirada,
+          builder: (context, app) =>
+              Padding(padding: mirada.margen, child: app),
+          child: child,
+        ),
+      ),
     );
   }
 }

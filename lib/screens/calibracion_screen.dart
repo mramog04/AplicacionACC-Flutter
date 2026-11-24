@@ -1,51 +1,99 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import '../gaze/gaze_correction.dart';
 import '../gaze/gaze_settings.dart';
 import '../router.dart';
 import '../theme.dart';
 import '../widgets/avisos.dart';
 import '../widgets/pantalla_base.dart';
 
-/// Calibración de la cámara para el modo mirada: 9 puntos, uno cada vez;
-/// en cada uno hay que mirarlo y hacer clic 5 veces. Cada clic le dice a
-/// WebGazer «ahora miro aquí». Mientras se calibra, la activación por
-/// mirada está en pausa.
+/// Calibración de la cámara para el modo mirada, a pantalla completa:
+///
+/// 1. 9 puntos que llegan hasta los bordes y las esquinas: mirar cada uno y
+///    hacer 5 clics. Cada clic le dice a WebGazer «ahora miro aquí».
+/// 2. Ajuste de bordes: mirar 5 puntos sin hacer clic. Se compara lo
+///    estimado con el punto real y se corrige (ver [CorreccionMirada]).
+///
+/// Mientras tanto la activación por mirada está en pausa.
 class CalibracionScreen extends StatefulWidget {
   const CalibracionScreen({super.key});
 
   static const clicsPorPunto = 5;
 
-  /// Posiciones relativas (x, y) de los 9 puntos dentro de la zona libre.
+  /// Posiciones relativas (x, y) de los 9 puntos: 0 y 1 son los bordes.
   static const puntos = [
-    (0.1, 0.1), (0.5, 0.1), (0.9, 0.1), //
-    (0.1, 0.5), (0.5, 0.5), (0.9, 0.5), //
-    (0.1, 0.9), (0.5, 0.9), (0.9, 0.9),
+    (0.0, 0.0), (0.5, 0.0), (1.0, 0.0), //
+    (0.0, 0.5), (0.5, 0.5), (1.0, 0.5), //
+    (0.0, 1.0), (0.5, 1.0), (1.0, 1.0),
   ];
+
+  /// Puntos del ajuste de bordes: el centro y las cuatro esquinas.
+  static const puntosAjuste = [
+    (0.5, 0.5),
+    (0.0, 0.0),
+    (1.0, 0.0),
+    (1.0, 1.0),
+    (0.0, 1.0),
+  ];
+
+  /// Tiempo para llevar la vista al punto, y tiempo midiendo.
+  static const esperaAjuste = Duration(milliseconds: 1000);
+  static const medidaAjuste = Duration(milliseconds: 1500);
+  static const minimoMuestras = 5;
 
   @override
   State<CalibracionScreen> createState() => _CalibracionScreenState();
 }
 
 class _CalibracionScreenState extends State<CalibracionScreen> {
+  static const _lado = 64.0;
+  static const _borde = 8.0;
+
   int _punto = 0;
   int _clics = 0;
+  int _ajuste = 0;
+  bool _midiendo = false;
+  Timer? _timer;
+  StreamSubscription<Offset>? _sub;
+  final _muestras = <Offset>[];
+  final _pares = <(Offset, Offset)>[];
 
-  bool get _terminada => _punto >= CalibracionScreen.puntos.length;
+  bool get _enClics => _punto < CalibracionScreen.puntos.length;
+  bool get _terminada =>
+      !_enClics && _ajuste >= CalibracionScreen.puntosAjuste.length;
 
   @override
   void initState() {
     super.initState();
-    mirada.controlador.pausado = true;
+    mirada.camara.empezarCalibracion();
+    mirada.correccion = CorreccionMirada.identidad;
+    // Tras el primer fotograma: notifica a la raíz de la app.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) mirada.calibrando = true;
+    });
   }
 
   @override
   void dispose() {
-    mirada.controlador.pausado = false;
+    _timer?.cancel();
+    _sub?.cancel();
+    // Aplazado: durante dispose no se puede notificar.
+    scheduleMicrotask(() => mirada.calibrando = false);
     super.dispose();
   }
 
-  void _clic(Offset centroGlobal) {
-    mirada.camara.registrarCalibracion(centroGlobal);
+  Offset _centro((double, double) f) {
+    final t = MediaQuery.sizeOf(context);
+    const m = _borde + _lado / 2;
+    return Offset(m + (t.width - 2 * m) * f.$1, m + (t.height - 2 * m) * f.$2);
+  }
+
+  void _clic() {
+    mirada.camara.registrarCalibracion(
+      _centro(CalibracionScreen.puntos[_punto]),
+    );
     setState(() {
       _clics++;
       if (_clics >= CalibracionScreen.clicsPorPunto) {
@@ -53,10 +101,47 @@ class _CalibracionScreenState extends State<CalibracionScreen> {
         _punto++;
       }
     });
+    if (!_enClics) _empezarPuntoAjuste();
+  }
+
+  void _empezarPuntoAjuste() {
+    _muestras.clear();
+    _midiendo = false;
+    _timer = Timer(CalibracionScreen.esperaAjuste, () {
+      setState(() => _midiendo = true);
+      _sub = mirada.camara.muestras.listen(_muestras.add);
+      _timer = Timer(CalibracionScreen.medidaAjuste, _acabarPuntoAjuste);
+    });
+  }
+
+  void _acabarPuntoAjuste() {
+    _sub?.cancel();
+    if (_muestras.length >= CalibracionScreen.minimoMuestras) {
+      _pares.add((
+        _centro(CalibracionScreen.puntosAjuste[_ajuste]),
+        CorreccionMirada.mediana(_muestras),
+      ));
+    }
+    setState(() => _ajuste++);
+    if (_terminada) {
+      mirada.correccion = CorreccionMirada.ajustar(_pares);
+    } else {
+      _empezarPuntoAjuste();
+    }
   }
 
   String get _instruccion {
-    if (_terminada) return 'Calibración terminada.';
+    if (_terminada) {
+      return _pares.length < 3
+          ? 'Calibración terminada, pero no se ha detectado bien tu mirada. '
+                'Comprueba la luz y que se te vea la cara, y repítela.'
+          : 'Calibración terminada.';
+    }
+    if (!_enClics) {
+      return 'Ajuste de bordes, ${_ajuste + 1} de '
+          '${CalibracionScreen.puntosAjuste.length}: mira el círculo sin '
+          'hacer clic ni mover la cabeza.';
+    }
     final faltan = CalibracionScreen.clicsPorPunto - _clics;
     return 'Punto ${_punto + 1} de ${CalibracionScreen.puntos.length}: '
         'mira el círculo y haz clic en él. '
@@ -65,71 +150,56 @@ class _CalibracionScreenState extends State<CalibracionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const lado = 64.0;
+    final actual = _terminada
+        ? null
+        : _enClics
+        ? CalibracionScreen.puntos[_punto]
+        : CalibracionScreen.puntosAjuste[_ajuste];
+    final centro = actual == null ? null : _centro(actual);
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSizes.margen),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
+      body: Stack(
+        children: [
+          // El texto va en la mitad de la pantalla donde no está el punto.
+          Align(
+            alignment: Alignment(0, (actual?.$2 ?? 1) >= 0.5 ? -0.45 : 0.45),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: _lado + 2 * AppSizes.margen,
+                vertical: AppSizes.margen,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
+                  const TituloPantalla('Calibración', centrado: true),
+                  const SizedBox(height: AppSizes.separacion),
+                  RegionViva(
+                    mensaje: _instruccion,
+                    anunciarAlAparecer: false,
+                    child: Text(_instruccion, textAlign: TextAlign.center),
+                  ),
+                  const SizedBox(height: AppSizes.margen),
                   BotonAtras(
                     alternativa: Rutas.ajustes,
                     texto: _terminada ? 'Volver a Ajustes' : 'Cancelar',
                   ),
                 ],
               ),
-              const SizedBox(height: AppSizes.separacion),
-              const TituloPantalla('Calibración'),
-              const SizedBox(height: AppSizes.separacion),
-              RegionViva(
-                mensaje: _instruccion,
-                anunciarAlAparecer: false,
-                child: Text(_instruccion),
-              ),
-              Expanded(
-                child: _terminada
-                    ? const SizedBox.shrink()
-                    : LayoutBuilder(
-                        builder: (context, zona) {
-                          final (fx, fy) = CalibracionScreen.puntos[_punto];
-                          final x = (zona.maxWidth - lado) * fx;
-                          final y = (zona.maxHeight - lado) * fy;
-                          return Stack(
-                            children: [
-                              Positioned(
-                                left: x,
-                                top: y,
-                                width: lado,
-                                height: lado,
-                                child: Builder(
-                                  builder: (context) => _Punto(
-                                    clicsQueFaltan:
-                                        CalibracionScreen.clicsPorPunto -
-                                        _clics,
-                                    alPulsar: () {
-                                      final caja =
-                                          context.findRenderObject()
-                                              as RenderBox;
-                                      _clic(
-                                        caja.localToGlobal(
-                                          caja.size.center(Offset.zero),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-              ),
-            ],
+            ),
           ),
-        ),
+          if (centro != null)
+            Positioned(
+              left: centro.dx - _lado / 2,
+              top: centro.dy - _lado / 2,
+              width: _lado,
+              height: _lado,
+              child: _enClics
+                  ? _Punto(
+                      clicsQueFaltan: CalibracionScreen.clicsPorPunto - _clics,
+                      alPulsar: _clic,
+                    )
+                  : _PuntoMirar(midiendo: _midiendo),
+            ),
+        ],
       ),
     );
   }
@@ -156,6 +226,31 @@ class _Punto extends StatelessWidget {
           padding: EdgeInsets.zero,
         ),
         child: Text('$clicsQueFaltan'),
+      ),
+    );
+  }
+}
+
+/// Círculo que solo hay que mirar; mientras mide se rellena y lleva un ojo.
+class _PuntoMirar extends StatelessWidget {
+  const _PuntoMirar({required this.midiendo});
+
+  final bool midiendo;
+
+  @override
+  Widget build(BuildContext context) {
+    return ExcludeSemantics(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: midiendo ? AppColors.acento : AppColors.fondo,
+          border: Border.all(color: AppColors.acento, width: 5),
+        ),
+        child: Icon(
+          midiendo ? Icons.visibility : Icons.circle,
+          size: midiendo ? 32 : 12,
+          color: midiendo ? AppColors.blanco : AppColors.acento,
+        ),
       ),
     );
   }

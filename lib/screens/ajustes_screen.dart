@@ -144,7 +144,10 @@ class _SeccionMirada extends StatelessWidget {
           const SizedBox(height: AppSizes.separacion),
           _GrupoOpciones(
             opciones: _fuentes,
-            valor: mirada.fuente.name,
+            // Mientras carga ya se ve marcada la que se ha elegido.
+            valor: mirada.esperandoCamara
+                ? FuenteMirada.camara.name
+                : mirada.fuente.name,
             alCambiar: (v) => v == 'camara'
                 ? alElegirCamara()
                 : mirada.usarFuente(FuenteMirada.raton),

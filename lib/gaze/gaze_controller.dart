@@ -326,13 +326,16 @@ class GazeController extends ChangeNotifier {
 
   /// Empieza a escuchar [fuente]. Las marcas de tiempo salen de un reloj
   /// propio.
-  void escuchar(GazeSource fuente) {
+  /// [ajustar] transforma cada muestra (corrección, límites de pantalla).
+  void escuchar(GazeSource fuente, {Offset Function(Offset)? ajustar}) {
     _sub?.cancel();
     reiniciar();
     _reloj
       ..reset()
       ..start();
-    _sub = fuente.muestras.listen((m) => procesar(m, _reloj.elapsed));
+    _sub = fuente.muestras.listen(
+      (m) => procesar(ajustar?.call(m) ?? m, _reloj.elapsed),
+    );
   }
 
   void dejarDeEscuchar() {

@@ -13,6 +13,7 @@ import 'package:lista_compra/gaze/gaze_source.dart';
 class CamaraSimulada implements GazeSource {
   Completer<void> permiso = Completer<void>();
   bool encendida = false;
+  int arranques = 0;
 
   @override
   String get nombre => 'Cámara simulada';
@@ -22,12 +23,16 @@ class CamaraSimulada implements GazeSource {
 
   @override
   Future<void> iniciar() async {
+    arranques++;
     await permiso.future;
     encendida = true;
   }
 
   @override
   Future<void> detener() async => encendida = false;
+
+  @override
+  void empezarCalibracion() {}
 
   @override
   void registrarCalibracion(Offset posicion) {}
@@ -92,5 +97,16 @@ void main() {
     expect(camara.encendida, isTrue);
     await ajustes.activar(false);
     expect(camara.encendida, isFalse);
+  });
+
+  test('Pedir la cámara dos veces solo la arranca una', () async {
+    await ajustes.activar(true);
+    final una = ajustes.usarFuente(FuenteMirada.camara);
+    await Future<void>.delayed(Duration.zero);
+    final otra = ajustes.usarFuente(FuenteMirada.camara);
+    camara.permiso.complete();
+    await Future.wait([una, otra]);
+    expect(camara.arranques, 1);
+    expect(ajustes.fuente, FuenteMirada.camara);
   });
 }

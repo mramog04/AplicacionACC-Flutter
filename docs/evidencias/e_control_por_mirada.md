@@ -8,7 +8,7 @@ Es un modo **solo para Flutter web**, que viene **desactivado por defecto**. Se 
 |---|---|
 | **Fuente de ratón con temblor simulado** | Funciona. Probada con pruebas automáticas y **en Chrome**, con eventos de puntero reales sobre la compilación web: bloqueo con borde y barra de progreso, activación, rearme tras navegar y el recorrido 3 completo (marcar las 3 casillas y ver «¡Compra completada!»). |
 | **Cámara (WebGazer)** | Probada por el grupo en un PC con cámara: funciona, pero costaba elegir entre botones próximos (de ahí los cambios de separación y de decisión entre vecinos, que con cámara **están pendientes de volver a probar**). La precisión no está medida. Con un vídeo simulado en Chrome está comprobado que el modelo facial carga, que la cámara se apaga al desactivar el modo y que se puede volver a encender. |
-| Calibración de 9 puntos × 5 clics | Con vídeo simulado: se registran los 45 clics en los 9 puntos. |
+| Calibración de 9 puntos × 5 clics y ajuste de bordes | Con vídeo simulado: se registran los 45 clics en los 9 puntos. |
 | Estado «Esperando el permiso de la cámara…» | Cubierto por pruebas unitarias con una cámara simulada (`test/gaze_settings_test.dart`). En el navegador automatizado el permiso se denegaba solo, así que no se pudo ver el aviso de permiso. |
 
 ## Parámetros (`lib/gaze/gaze_config.dart`)
@@ -41,6 +41,11 @@ Es un modo **solo para Flutter web**, que viene **desactivado por defecto**. Se 
    - **Problema:** un control a menos de `radioSalida` del bloqueado no se alcanzaba sin apartar antes la vista, y mientras tanto podía activarse el que no se quería.
    - **Solución:** si un vecino está claramente más cerca, el dwell del bloqueado se congela; si se le mira durante `tiempoCambio`, pasa a ser el bloqueado. Entre dos sin ganador claro no se elige ninguno.
 5. **«Subir» y «Bajar».** Con más separación cabe menos contenido y con la vista no se puede arrastrar la pantalla. Solo aparecen con el modo activo y si el contenido no cabe.
+
+6. **Bordes y esquinas.**
+   - **Problema:** con cámara no se acertaba en los bordes. La calibración no llegaba a ellos, las estimaciones fuera de la pantalla se descartaban por lejanas y la estimación se encogía hacia el centro.
+   - **Solución:** los 9 puntos llegan a los bordes; después hay un ajuste de 5 puntos (centro y esquinas) que solo se miran y del que sale una corrección lineal por eje (`gaze_correction.dart`); lo que cae fuera cuenta como el borde; y en ventanas de al menos 600 px la app se aparta un 6 % a los lados y un 3 % arriba y abajo. **Comprobado con mirada simulada; con cámara real, pendiente.**
+7. **Un solo arranque de la cámara a la vez.** Dos simultáneos rompían MediaPipe (`abort(undefined)`) hasta recargar la página.
 
 Son constantes o código aislado en `gaze_controller.dart` y tienen su prueba en `test/gaze_controller_test.dart`.
 
@@ -93,5 +98,6 @@ cd build/web && python3 -m http.server 8765    # o: flutter run -d chrome
 | Archivo | Qué prueba |
 |---|---|
 | `test/gaze_controller_test.dart` | Bloqueo dentro del radio de entrada. El ruido de hasta 150 px no cambia el objetivo. Se suelta solo tras la gracia; un parpadeo no lo suelta. El dwell activa una vez, se reinicia al cambiar de objetivo y se congela en la gracia. Suavizado y valores atípicos, pausa, salto de la vista, rearme tras activar, y paso entre controles vecinos (cambio, congelado, vistazo breve, duda entre dos). |
+| `test/gaze_correction_test.dart` | Corrección de una mirada encogida; datos no fiables; estimación fuera de la pantalla; margen; calibración hasta las cuatro esquinas. |
 | `test/gaze_settings_test.dart` | Desactivado por defecto; espera del permiso; permiso concedido tarde tras volver al ratón; fallo con motivo; apagado de la cámara. |
 | `test/gaze_widget_test.dart` | Activación desde Ajustes con aviso de privacidad y uso del ratón cuando no hay cámara; «Aumentar unidades» por mirada con su anuncio; recorrido 2 completo por mirada; «Borrar lista» en dos pasos; guías con el modo activo; separación real en 6 pantallas (móvil y escritorio); recorrido 3 con temblor de casilla en casilla; «Subir»/«Bajar». |
