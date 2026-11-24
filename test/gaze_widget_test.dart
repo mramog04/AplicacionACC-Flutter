@@ -239,7 +239,12 @@ void main() {
 
     await mirarTemblando('Terminar lista');
     for (final p in ['Pasta espagueti', 'Queso curado', 'Vino tinto']) {
-      await mirarTemblando(RegExp('^$p\n'));
+      final casilla = RegExp('^$p\n');
+      final f = find.bySemanticsLabel(casilla);
+      for (var i = 0; i < 3 && f.hitTestable().evaluate().isEmpty; i++) {
+        await mirarTemblando('Bajar');
+      }
+      await mirarTemblando(casilla);
     }
     await nodo(tester, '¡Compra completada! Has marcado los 3 productos.');
     expectAnuncio(tester, '¡Compra completada! Has marcado los 3 productos.');
@@ -264,4 +269,21 @@ void main() {
     await asentar(tester);
     expect(find.bySemanticsLabel('Bajar'), findsNothing);
   });
+
+  for (final (pantalla, ruta, filas) in [
+    ('Mis listas', Rutas.misListas, [r'^Compra semanal', r'^Cena del sábado']),
+    ('Lista', Rutas.lista('1'), [r'^Leche entera', r'^Pan de molde']),
+    ('Buscar', Rutas.buscar('1'), [r'^Leche entera', r'^Pan de molde']),
+  ]) {
+    testWidgets('$pantalla: unos 250 px entre filas vecinas', (tester) async {
+      await arrancar(tester, ruta: ruta);
+      tester.view.physicalSize = const Size(1280, 900);
+      await asentar(tester);
+      await activarMirada(tester);
+      double y(String e) =>
+          tester.getCenter(find.bySemanticsLabel(RegExp(e))).dy;
+      expect(y(filas[1]) - y(filas[0]), greaterThanOrEqualTo(250));
+      await desactivarMirada();
+    });
+  }
 }

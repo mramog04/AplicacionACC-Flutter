@@ -23,6 +23,8 @@ Es un modo **solo para Flutter web**, que viene **desactivado por defecto**. Se 
 | `repetirSinSoltar` | `false` | Tras activar, no se repite hasta soltar el control |
 | `ruidoRatonPorDefecto` | 30 px | Temblor simulado de la fuente de ratón (ajustable de 0 a 150 en Ajustes) |
 | `ladoMinimoMirada` / `separacionMirada` | 88 / 72 px | Con el modo activo, tamaño mínimo de cada control y hueco entre vecinos (filas, casillas, −/+, barra inferior y diálogo) |
+| `altoFilaMirada` / `separacionFilasMirada` | 96 / 160 px | Filas de las listas: unos 250 px entre centros |
+| `distanciaMinCm` / `distanciaMaxCm` | 50 / 70 cm | Distancia a la cámara recomendada |
 | `margenDecision` | 24 px | Un control gana a otro si está más cerca por este margen; si ninguno gana, no se bloquea ninguno |
 | `radioCambio` / `tiempoCambio` | 30 px / 400 ms | Mirando así a un vecino, pasa a ser el bloqueado |
 | `anchoCarrilMirada` / `fraccionDesplazamiento` | 96 px / 0,7 | Botones «Subir» y «Bajar», y cuánto desplazan |
@@ -47,12 +49,15 @@ Es un modo **solo para Flutter web**, que viene **desactivado por defecto**. Se 
    - **Solución:** los 9 puntos llegan a los bordes; después hay un ajuste de 5 puntos (centro y esquinas) que solo se miran y del que sale una corrección lineal por eje (`gaze_correction.dart`); lo que cae fuera cuenta como el borde; y en ventanas de al menos 600 px la app se aparta un 6 % a los lados y un 3 % arriba y abajo. **Comprobado con mirada simulada; con cámara real, pendiente.**
 7. **Un solo arranque de la cámara a la vez.** Dos simultáneos rompían MediaPipe (`abort(undefined)`) hasta recargar la página.
 
+8. **Filas más separadas.** Con cámara no se distinguían dos filas a 72 px. Los estudios con WebGazer dan errores de unos 100–150 px ([PMC11289017](https://pmc.ncbi.nlm.nih.gov/articles/PMC11289017)), así que hay unos 250 px entre centros. El botón flotante de Mis listas pasa a la barra inferior.
+9. **Distancia a la cámara.** Se estima con la separación entre los ojos (malla de WebGazer) y se avisa si no está entre 50 y 70 cm. Es **aproximada**: supone una cámara de 65° y una separación media de 9 cm. Comprobada con puntos de cara simulados, no con una cara real. También se recuerda la distancia a la que se calibró.
+
 Son constantes o código aislado en `gaze_controller.dart` y tienen su prueba en `test/gaze_controller_test.dart`.
 
 ## Accesibilidad y seguridad
 
 - **Desactivado por defecto.** El interruptor es un `SwitchListTile` de al menos 48 px y anuncia su estado (activado o desactivado).
-- **Feedback visual sin depender solo del color.** El control bloqueado muestra un borde grueso (5 px, #0B4F9C) y una barra de progreso del dwell. **No se dibuja ningún punto de mirada.**
+- **Feedback visual sin depender solo del color.** El control bloqueado muestra un borde grueso (5 px, #0B4F9C) y una barra de progreso del dwell. Por defecto **no se dibuja ningún punto de mirada**; se puede activar un puntero rojo en Ajustes («Mostrar puntero de mirada»), que no recibe toques ni lo lee el lector.
 - **Activar por mirada equivale a tocar.** `GazeTarget` llama a la misma función que `onPressed` y anuncia «Activado con la mirada: …» al lector de pantalla.
 - **Privacidad.** Antes de encender la cámara aparece un diálogo que explica que el vídeo se procesa en el navegador, que no se graba, no se guarda y no sale del dispositivo. Además:
   - WebGazer se configura con `saveDataAcrossSessions(false)` y sin vista previa ni puntos;

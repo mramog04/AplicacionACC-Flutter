@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
+import '../gaze/gaze_config.dart';
 import '../gaze/gaze_target.dart';
 import '../theme.dart';
 
@@ -148,6 +149,7 @@ class BotonFila extends StatelessWidget implements ControlDeMirada {
     return GazeTarget(
       etiqueta: titulo,
       alActivar: alPulsar,
+      altoMinimo: GazeConfig.altoFilaMirada,
       child: OutlinedButton(
         onPressed: alPulsar,
         style: OutlinedButton.styleFrom(

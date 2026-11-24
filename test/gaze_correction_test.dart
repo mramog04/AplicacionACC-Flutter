@@ -7,6 +7,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:lista_compra/gaze/gaze_correction.dart';
+import 'package:lista_compra/gaze/gaze_distance.dart';
 import 'package:lista_compra/gaze/gaze_settings.dart';
 import 'package:lista_compra/gaze/gaze_source.dart';
 import 'package:lista_compra/gaze/gaze_controller.dart';
@@ -25,6 +26,8 @@ class CamaraFija implements GazeSource {
   Future<void> iniciar() async {}
   @override
   Future<void> detener() async {}
+  @override
+  double? distanciaCm;
   @override
   void empezarCalibracion() {}
   @override
@@ -114,6 +117,49 @@ void main() {
     },
   );
 
+  test('Distancia: el doble de separación entre los ojos, la mitad', () {
+    final d = estimarDistanciaCm(separacionOjosPx: 75, anchoImagenPx: 640)!;
+    expect(d, closeTo(60, 3));
+    expect(
+      estimarDistanciaCm(separacionOjosPx: 150, anchoImagenPx: 640),
+      closeTo(d / 2, 0.01),
+    );
+    expect(estimarDistanciaCm(separacionOjosPx: 0, anchoImagenPx: 640), isNull);
+    expect(EstadoDistancia.de(null), EstadoDistancia.sinCara);
+    expect(EstadoDistancia.de(40), EstadoDistancia.cerca);
+    expect(EstadoDistancia.de(60), EstadoDistancia.bien);
+    expect(EstadoDistancia.de(90), EstadoDistancia.lejos);
+  });
+
+  testWidgets('El puntero solo aparece si se pide y sigue a la mirada', (
+    tester,
+  ) async {
+    mirada.disponible = true;
+    addTearDown(() => mirada.disponible = false);
+    await arrancar(tester);
+    await mirada.activar(true);
+    await mirada.raton.detener();
+    final puntero = find.byKey(const ValueKey('puntero-mirada'));
+    Future<void> mirar(Offset p) async {
+      for (var i = 0; i < 14; i++) {
+        mirada.controlador.procesar(p, Duration(milliseconds: i));
+      }
+      await tester.pump();
+    }
+
+    await mirar(const Offset(200, 700));
+    expect(puntero, findsNothing);
+    mirada.mostrarPuntero = true;
+    await tester.pump();
+    expect(tester.getCenter(puntero), const Offset(200, 700));
+    await mirar(const Offset(100, 650));
+    expect(tester.getCenter(puntero), const Offset(100, 650));
+    // No intercepta toques ni añade nodos semánticos.
+    expect(puntero.hitTestable(), findsNothing);
+    mirada.mostrarPuntero = false;
+    await mirada.activar(false);
+  });
+
   testWidgets('La calibración llega a las cuatro esquinas y termina', (
     tester,
   ) async {
@@ -126,6 +172,9 @@ void main() {
     appRouter.go(Rutas.calibracion);
     await asentar(tester);
     expect(mirada.controlador.pausado, isTrue);
+    expect(find.bySemanticsLabel(RegExp('No se ve tu cara')), findsOne);
+    await tester.tap(find.bySemanticsLabel('Empezar'));
+    await asentar(tester);
 
     final centros = <Offset>[];
     for (var p = 0; p < 9; p++) {

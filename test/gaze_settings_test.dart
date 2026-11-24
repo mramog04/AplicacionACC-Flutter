@@ -32,6 +32,8 @@ class CamaraSimulada implements GazeSource {
   Future<void> detener() async => encendida = false;
 
   @override
+  double? distanciaCm;
+  @override
   void empezarCalibracion() {}
 
   @override

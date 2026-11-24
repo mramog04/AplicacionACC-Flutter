@@ -99,7 +99,10 @@ class GazeController extends ChangeNotifier {
     for (final o in _objetivos.values) o.rect(),
   ];
 
-  /// Última posición suavizada (para pruebas y depuración; no se dibuja).
+  /// Última posición suavizada, muestra a muestra: la usa el puntero opcional.
+  final punto = ValueNotifier<Offset?>(null);
+
+  /// Última posición suavizada.
   Offset? get posicion => _ultimas.isEmpty ? null : _media();
 
   void registrar(Object id, ObjetivoMirada objetivo) =>
@@ -124,6 +127,7 @@ class GazeController extends ChangeNotifier {
     _puntoActivacion = null;
     _ultimas.clear();
     _lejanas.clear();
+    punto.value = null;
     _soltar();
   }
 
@@ -250,6 +254,7 @@ class GazeController extends ChangeNotifier {
     final p = _media();
     final dt = _avanzarReloj(ahora);
     if (pausado) return;
+    punto.value = p;
 
     // 1. Mantener o soltar el objetivo bloqueado (histéresis).
     if (_bloqueado != null) {
@@ -348,6 +353,7 @@ class GazeController extends ChangeNotifier {
   @override
   void dispose() {
     _eliminado = true;
+    punto.dispose();
     _sub?.cancel();
     super.dispose();
   }

@@ -6,6 +6,7 @@ import '../router.dart';
 import '../theme.dart';
 import '../widgets/avisos.dart';
 import '../widgets/controles.dart';
+import '../widgets/indicador_distancia.dart';
 import '../widgets/pantalla_base.dart';
 
 /// 7. Ajustes: idioma y tamaño de texto (solo maqueta: la selección se
@@ -197,6 +198,16 @@ class _SeccionMirada extends StatelessWidget {
             ),
           ],
           const SizedBox(height: AppSizes.margen),
+          AnilloFoco(
+            child: SwitchListTile(
+              title: const Text('Mostrar puntero de mirada'),
+              subtitle: const Text('Un punto rojo marca dónde estás mirando.'),
+              value: mirada.mostrarPuntero,
+              onChanged: (v) => mirada.mostrarPuntero = v,
+              shape: borde,
+            ),
+          ),
+          const SizedBox(height: AppSizes.margen),
           if (mirada.fuente == FuenteMirada.raton) ...[
             Text(
               'Temblor simulado: ${mirada.ruidoRaton.round()} px',
@@ -210,12 +221,16 @@ class _SeccionMirada extends StatelessWidget {
               semanticFormatterCallback: (v) => '${v.round()} píxeles',
               onChanged: (v) => mirada.ruidoRaton = v,
             ),
-          ] else
+          ] else ...[
+            Text('Distancia a la cámara', style: textos.titleSmall),
+            const IndicadorDistancia(),
+            const SizedBox(height: AppSizes.margen),
             OutlinedButton.icon(
               onPressed: () => context.push(Rutas.calibracion),
               icon: const Icon(Icons.center_focus_strong),
               label: const Text('Calibrar (9 puntos)'),
             ),
+          ],
         ],
       ],
     );

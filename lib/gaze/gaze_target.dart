@@ -28,6 +28,7 @@ class GazeTarget extends StatefulWidget {
     required this.etiqueta,
     required this.alActivar,
     required this.child,
+    this.altoMinimo = GazeConfig.ladoMinimoMirada,
   });
 
   /// Nombre del control para el anuncio («Activado con la mirada: …»).
@@ -35,6 +36,9 @@ class GazeTarget extends StatefulWidget {
 
   /// null = control deshabilitado: no se puede bloquear.
   final VoidCallback? alActivar;
+
+  /// Alto mínimo con el modo activo.
+  final double altoMinimo;
 
   final Widget child;
 
@@ -108,9 +112,9 @@ class _GazeTargetState extends State<GazeTarget> {
           clipBehavior: Clip.none,
           children: [
             ConstrainedBox(
-              constraints: const BoxConstraints(
+              constraints: BoxConstraints(
                 minWidth: GazeConfig.ladoMinimoMirada,
-                minHeight: GazeConfig.ladoMinimoMirada,
+                minHeight: widget.altoMinimo,
               ),
               child: hijo,
             ),
@@ -200,9 +204,58 @@ class CapaMirada extends StatelessWidget {
         color: AppColors.fondoBarras,
         child: ListenableBuilder(
           listenable: mirada,
-          builder: (context, app) =>
+          builder: (context, app) => Stack(
+            fit: StackFit.expand,
+            children: [
               Padding(padding: mirada.margen, child: app),
+              if (mirada.activo && mirada.mostrarPuntero && !mirada.calibrando)
+                const _PunteroMirada(),
+            ],
+          ),
           child: child,
+        ),
+      ),
+    );
+  }
+}
+
+/// Puntero rojo que marca dónde se estima la mirada. Opcional, apagado por
+/// defecto: seguir un punto que se mueve distrae. No recibe toques ni lo lee
+/// el lector de pantalla.
+class _PunteroMirada extends StatelessWidget {
+  const _PunteroMirada();
+
+  @override
+  Widget build(BuildContext context) {
+    const lado = GazeConfig.ladoPuntero;
+    return IgnorePointer(
+      child: ExcludeSemantics(
+        child: ValueListenableBuilder(
+          valueListenable: mirada.controlador.punto,
+          builder: (context, p, _) => p == null
+              ? const SizedBox.shrink()
+              : Stack(
+                  children: [
+                    Positioned(
+                      left: p.dx - lado / 2,
+                      top: p.dy - lado / 2,
+                      width: lado,
+                      height: lado,
+                      child: const RepaintBoundary(
+                        key: ValueKey('puntero-mirada'),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.error,
+                            border: Border.fromBorderSide(
+                              BorderSide(color: AppColors.blanco, width: 4),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
         ),
       ),
     );

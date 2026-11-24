@@ -17,6 +17,10 @@ abstract class GazeSource {
 
   Future<void> detener();
 
+  /// Distancia aproximada de la cara a la cámara en cm, o null si no se ve
+  /// ninguna cara (o la fuente no es una cámara).
+  double? get distanciaCm => null;
+
   /// Empieza una calibración nueva: olvida lo aprendido antes.
   void empezarCalibracion() {}
 
@@ -82,6 +86,9 @@ class MouseGazeSource implements GazeSource {
     _timer?.cancel();
     _timer = null;
   }
+
+  @override
+  double? get distanciaCm => null;
 
   @override
   void empezarCalibracion() {}

@@ -3,6 +3,7 @@ import 'dart:js_interop';
 
 import 'package:flutter/painting.dart';
 
+import 'gaze_distance.dart';
 import 'gaze_source.dart';
 
 // Enlaces con WebGazer.js (cargado desde web/index.html) mediante
@@ -23,6 +24,7 @@ extension type _WebGazer._(JSObject _) implements JSObject {
   external JSPromise<JSAny?> clearData();
   external _WebGazer removeMouseEventListeners();
   external _Parametros get params;
+  external _Rastreador getTracker();
   external _WebGazer showVideoPreview(bool v);
   external _WebGazer showPredictionPoints(bool v);
   external _WebGazer showFaceOverlay(bool v);
@@ -30,6 +32,17 @@ extension type _WebGazer._(JSObject _) implements JSObject {
   external _WebGazer saveDataAcrossSessions(bool v);
   external _WebGazer applyKalmanFilter(bool v);
   external void recordScreenPosition(double x, double y, String tipo);
+}
+
+extension type _Rastreador._(JSObject _) implements JSObject {
+  external JSArray<JSArray<JSNumber>>? getPositions();
+}
+
+@JS('document.getElementById')
+external _Lienzo? _porId(String id);
+
+extension type _Lienzo._(JSObject _) implements JSObject {
+  external int get width;
 }
 
 extension type _Parametros._(JSObject _) implements JSObject {
@@ -148,6 +161,33 @@ class WebGazerGazeSource implements GazeSource {
     final wg = _webgazer;
     if (wg != null && _iniciada) _apagar(wg);
     _iniciada = false;
+  }
+
+  /// Puntos de la cara en el fotograma anterior en que se leyeron: si no se
+  /// ve ninguna cara, WebGazer conserva los últimos y hay que descartarlos.
+  JSArray<JSArray<JSNumber>>? _ultimosPuntos;
+  int _lecturasIguales = 0;
+
+  @override
+  double? get distanciaCm {
+    if (!_iniciada) return null;
+    final puntos = _webgazer?.getTracker().getPositions();
+    if (puntos == null || puntos.length < 264) return null;
+    _lecturasIguales = identical(puntos, _ultimosPuntos)
+        ? _lecturasIguales + 1
+        : 0;
+    _ultimosPuntos = puntos;
+    if (_lecturasIguales >= 3) return null;
+    // Comisuras externas de los ojos en la malla de MediaPipe.
+    final a = puntos[33], b = puntos[263];
+    final separacion =
+        (Offset(a[0].toDartDouble, a[1].toDartDouble) -
+                Offset(b[0].toDartDouble, b[1].toDartDouble))
+            .distance;
+    return estimarDistanciaCm(
+      separacionOjosPx: separacion,
+      anchoImagenPx: (_porId('webgazerVideoCanvas')?.width ?? 0).toDouble(),
+    );
   }
 
   @override

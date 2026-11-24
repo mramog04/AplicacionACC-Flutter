@@ -7,10 +7,12 @@ import '../gaze/gaze_settings.dart';
 import '../router.dart';
 import '../theme.dart';
 import '../widgets/avisos.dart';
+import '../widgets/indicador_distancia.dart';
 import '../widgets/pantalla_base.dart';
 
 /// Calibración de la cámara para el modo mirada, a pantalla completa:
 ///
+/// 0. Colocarse: distancia a la cámara y «Empezar».
 /// 1. 9 puntos que llegan hasta los bordes y las esquinas: mirar cada uno y
 ///    hacer 5 clics. Cada clic le dice a WebGazer «ahora miro aquí».
 /// 2. Ajuste de bordes: mirar 5 puntos sin hacer clic. Se compara lo
@@ -51,6 +53,7 @@ class _CalibracionScreenState extends State<CalibracionScreen> {
   static const _lado = 64.0;
   static const _borde = 8.0;
 
+  bool _empezada = false;
   int _punto = 0;
   int _clics = 0;
   int _ajuste = 0;
@@ -130,7 +133,16 @@ class _CalibracionScreenState extends State<CalibracionScreen> {
     }
   }
 
+  void _empezar() {
+    mirada.distanciaCalibrada = mirada.camara.distanciaCm;
+    setState(() => _empezada = true);
+  }
+
   String get _instruccion {
+    if (!_empezada) {
+      return 'Siéntate de frente, con luz delante, y mantén la misma postura '
+          'durante toda la calibración y después.';
+    }
     if (_terminada) {
       return _pares.length < 3
           ? 'Calibración terminada, pero no se ha detectado bien tu mirada. '
@@ -150,7 +162,7 @@ class _CalibracionScreenState extends State<CalibracionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final actual = _terminada
+    final actual = _terminada || !_empezada
         ? null
         : _enClics
         ? CalibracionScreen.puntos[_punto]
@@ -178,6 +190,15 @@ class _CalibracionScreenState extends State<CalibracionScreen> {
                     child: Text(_instruccion, textAlign: TextAlign.center),
                   ),
                   const SizedBox(height: AppSizes.margen),
+                  if (!_empezada) ...[
+                    const IndicadorDistancia(),
+                    const SizedBox(height: AppSizes.margen),
+                    FilledButton(
+                      onPressed: _empezar,
+                      child: const Text('Empezar'),
+                    ),
+                    const SizedBox(height: AppSizes.margen),
+                  ],
                   BotonAtras(
                     alternativa: Rutas.ajustes,
                     texto: _terminada ? 'Volver a Ajustes' : 'Cancelar',

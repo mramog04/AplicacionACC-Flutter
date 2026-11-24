@@ -20,6 +20,9 @@ class WebGazerGazeSource implements GazeSource {
   Future<void> detener() async {}
 
   @override
+  double? get distanciaCm => null;
+
+  @override
   void empezarCalibracion() {}
 
   @override

@@ -2,7 +2,7 @@
 
 ## 1. Selector de unidades (`SelectorUnidades`)
 
-**Archivo:** `lib/widgets/controles.dart`, líneas 169–259.
+**Archivo:** `lib/widgets/controles.dart`, líneas 171–261.
 
 **Problema.** Es un componente compuesto (− · número · +).
 - En la versión anterior, los botones se llamaban «Quitar una unidad» y «Añadir una unidad» solo mediante `tooltip`.

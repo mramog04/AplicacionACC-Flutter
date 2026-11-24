@@ -269,7 +269,7 @@ class _CasillaProducto extends StatelessWidget implements ControlDeMirada {
     );
     // Que la casilla agrandada por el modo mirada centre su contenido.
     return ListTileTheme.merge(
-      minTileHeight: mirada.activo ? GazeConfig.ladoMinimoMirada : null,
+      minTileHeight: mirada.activo ? GazeConfig.altoFilaMirada : null,
       child: casilla,
     );
   }

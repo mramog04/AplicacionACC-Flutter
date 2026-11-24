@@ -49,6 +49,17 @@ class GazeSettings extends ChangeNotifier {
   /// Corrección de la cámara, medida al final de la calibración.
   CorreccionMirada correccion = CorreccionMirada.identidad;
 
+  /// Distancia a la que se calibró, o null si no se ha medido.
+  double? distanciaCalibrada;
+
+  /// Dibujar un puntero rojo donde se estima la mirada (Ajustes).
+  bool _mostrarPuntero = false;
+  bool get mostrarPuntero => _mostrarPuntero;
+  set mostrarPuntero(bool v) {
+    _mostrarPuntero = v;
+    notifyListeners();
+  }
+
   bool _calibrando = false;
   bool get calibrando => _calibrando;
 

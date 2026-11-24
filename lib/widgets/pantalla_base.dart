@@ -125,15 +125,20 @@ class PantallaBase extends StatelessWidget {
   /// Hueco encima del elemento [i] del contenido. En modo mirada, dos
   /// controles seguidos se separan más.
   double _huecoEncima(int i) {
-    if (i == 0) return AppSizes.margen;
-    final controlesSeguidos =
-        contenido[i] is ControlDeMirada && contenido[i - 1] is ControlDeMirada;
-    return mirada.activo && controlesSeguidos
-        ? GazeConfig.separacionMirada
+    final esControl = mirada.activo && contenido[i] is ControlDeMirada;
+    if (i == 0) {
+      return esControl ? GazeConfig.separacionMirada : AppSizes.margen;
+    }
+    return esControl && contenido[i - 1] is ControlDeMirada
+        ? GazeConfig.separacionFilasMirada
         : separacion;
   }
 
   Widget _construir(BuildContext context) {
+    // En modo mirada el botón flotante pasa a la barra inferior: encima de
+    // las filas, mirarlo se confundía con mirar la fila.
+    final barra = barraInferior ?? (mirada.activo ? botonFlotante : null);
+    final flotante = identical(barra, botonFlotante) ? null : botonFlotante;
     final hayBotones = botonIzquierdo != null || botonDerecho != null;
     final altoMaxBarra =
         MediaQuery.sizeOf(context).height *
@@ -197,8 +202,7 @@ class PantallaBase extends StatelessWidget {
         ),
     ];
     final cuerpo = _CuerpoDesplazable(
-      hayBarraInferior: barraInferior != null,
-      hayBotonFlotante: botonFlotante != null,
+      hayBarraInferior: barra != null,
       children: [if (barraDesplazable) barraSuperior, ...elementos],
     );
 
@@ -212,7 +216,7 @@ class PantallaBase extends StatelessWidget {
                 Expanded(child: cuerpo),
               ],
             ),
-      bottomNavigationBar: barraInferior == null
+      bottomNavigationBar: barra == null
           ? null
           : DecoratedBox(
               decoration: const BoxDecoration(
@@ -225,12 +229,12 @@ class PantallaBase extends StatelessWidget {
                   constraints: BoxConstraints(maxHeight: altoMaxBarra),
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(AppSizes.margen),
-                    child: barraInferior,
+                    child: barra,
                   ),
                 ),
               ),
             ),
-      floatingActionButton: botonFlotante,
+      floatingActionButton: flotante,
     );
   }
 }
@@ -242,12 +246,10 @@ class _CuerpoDesplazable extends StatefulWidget {
   const _CuerpoDesplazable({
     required this.children,
     required this.hayBarraInferior,
-    required this.hayBotonFlotante,
   });
 
   final List<Widget> children;
   final bool hayBarraInferior;
-  final bool hayBotonFlotante;
 
   @override
   State<_CuerpoDesplazable> createState() => _CuerpoDesplazableState();
@@ -368,14 +370,11 @@ class _CuerpoDesplazableState extends State<_CuerpoDesplazable> {
     }
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(
+      padding: const EdgeInsets.fromLTRB(
         GazeConfig.separacionMirada - AppSizes.margen,
         AppSizes.margen,
         AppSizes.margen,
-        // Que el botón flotante no quede encima de «Bajar».
-        widget.hayBotonFlotante
-            ? 104 + AppSizes.margen + GazeConfig.separacionMirada
-            : AppSizes.margen,
+        AppSizes.margen,
       ),
       child: SizedBox(
         width: GazeConfig.anchoCarrilMirada,

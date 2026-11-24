@@ -62,6 +62,24 @@ abstract final class GazeConfig {
   static const double ladoMinimoMirada = 88;
   static const double separacionMirada = 72;
 
+  /// Filas de las listas (listas, productos, resultados y casillas): más
+  /// altas y más separadas. Una cámara web con WebGazer se equivoca unos
+  /// 100–150 px, así que entre los centros de dos filas debe haber unos 250.
+  static const double altoFilaMirada = 96;
+  static const double separacionFilasMirada = 160;
+
+  /// Distancia a la cámara recomendada (la habitual en los estudios con
+  /// cámara web) y datos para estimarla: distancia media entre las comisuras
+  /// externas de los ojos y ángulo de visión horizontal típico de una cámara.
+  /// Es aproximada: depende de la cámara y de la persona.
+  static const double distanciaMinCm = 50;
+  static const double distanciaMaxCm = 70;
+  static const double anchoOjosCm = 9;
+  static const double anguloCamaraGrados = 65;
+
+  /// Diámetro del puntero opcional que marca dónde se estima la mirada.
+  static const double ladoPuntero = 32;
+
   /// Con el modo activo en pantallas de al menos [anchoMinimoConMargen], la
   /// app se aparta del borde esta fracción del ancho y del alto: en los bordes
   /// y esquinas la estimación de la mirada es peor.
