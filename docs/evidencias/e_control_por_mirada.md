@@ -50,7 +50,7 @@ Es un modo **solo para Flutter web**, que viene **desactivado por defecto**. Se 
    - **Solución:** los 9 puntos llegan a los bordes; después hay un ajuste de 5 puntos (centro y esquinas) que solo se miran y del que sale una corrección lineal por eje (`gaze_correction.dart`); lo que cae fuera cuenta como el borde; y en ventanas de al menos 600 px la app se aparta un 6 % a los lados y un 3 % arriba y abajo. **Comprobado con mirada simulada; con cámara real, pendiente.**
 7. **Un solo arranque de la cámara a la vez.** Dos simultáneos rompían MediaPipe (`abort(undefined)`) hasta recargar la página.
 
-8. **Filas más separadas.** Con cámara no se distinguían dos filas a 72 px. Los estudios con WebGazer dan errores de unos 100–150 px ([PMC11289017](https://pmc.ncbi.nlm.nih.gov/articles/PMC11289017)), así que hay unos 250 px entre centros. El botón flotante de Mis listas pasa a la barra inferior.
+8. **Filas más separadas.** Con cámara no se distinguían dos filas a 72 px. Un estudio con un sistema basado en WebGazer da una precisión de calibración de 100–150 px ([arXiv 2308.06035](https://arxiv.org/pdf/2308.06035), con participantes a 50–70 cm, buena luz y poca cabeza en movimiento), así que hay unos 250 px entre centros. El botón flotante de Mis listas pasa a la barra inferior.
 9. **Distancia a la cámara.** Se estima con la separación entre los ojos (malla de WebGazer) y se avisa si no está entre 50 y 70 cm. Es **aproximada**: supone una cámara de 65° y una separación media de 9 cm. Comprobada con puntos de cara simulados, no con una cara real. También se recuerda la distancia a la que se calibró.
 
 Son constantes o código aislado en `gaze_controller.dart` y tienen su prueba en `test/gaze_controller_test.dart`.
