@@ -107,7 +107,7 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                 ? GazeConfig.separacionMirada
                 : AppSizes.separacion,
             tamanoBoton: mirada.activo
-                ? GazeConfig.ladoBotonMirada
+                ? GazeConfig.ladoMinimoMirada
                 : AppSizes.minControl,
           ),
         ),

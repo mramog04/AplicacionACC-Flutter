@@ -1,8 +1,12 @@
 // Modo mirada dentro de la app, con muestras simuladas (sin cámara).
 
+import 'dart:math';
+
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:lista_compra/gaze/gaze_settings.dart';
+import 'package:lista_compra/gaze/gaze_source.dart';
 import 'package:lista_compra/router.dart';
 
 import 'helpers.dart';
@@ -149,9 +153,8 @@ void main() {
     await activarMirada(tester);
     final menos = tester.getRect(find.bySemanticsLabel('Disminuir unidades'));
     final mas = tester.getRect(find.bySemanticsLabel('Aumentar unidades'));
-    expect(menos.width, greaterThanOrEqualTo(72));
-    // El centro de «+» queda a más del radio de salida del borde de «−».
-    expect(mas.center.dx - menos.right, greaterThan(200));
+    expect(menos.width, greaterThanOrEqualTo(88));
+    expect(mas.left - menos.right, greaterThanOrEqualTo(72));
     await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
     await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
     await expectLater(tester, meetsGuideline(textContrastGuideline));
@@ -159,21 +162,106 @@ void main() {
     await desactivarMirada();
   });
 
-  testWidgets('Activar el modo no cambia el tamaño de los botones', (
+  testWidgets('El modo agranda los botones sin cambiarles el ancho', (
     tester,
   ) async {
     await arrancar(tester, ruta: Rutas.lista('1'));
-    final antes = [
-      for (final e in ['+ Añadir producto', 'Terminar lista', 'Borrar lista'])
-        tester.getRect(find.bySemanticsLabel(e)),
-    ];
+    Rect r(String e) => tester.getRect(find.bySemanticsLabel(e));
+    const etiquetas = ['+ Añadir producto', 'Terminar lista'];
+    final antes = [for (final e in etiquetas) r(e)];
     await activarMirada(tester);
-    final despues = [
-      for (final e in ['+ Añadir producto', 'Terminar lista', 'Borrar lista'])
-        tester.getRect(find.bySemanticsLabel(e)),
-    ];
-    expect(despues[0].size, antes[0].size);
-    expect(despues[1].size, antes[1].size);
-    expect(despues[2].size, antes[2].size);
+    for (final (i, e) in etiquetas.indexed) {
+      expect(r(e).width, antes[i].width);
+      expect(r(e).height, greaterThanOrEqualTo(88));
+    }
+    await desactivarMirada();
+    await asentar(tester);
+    expect([for (final e in etiquetas) r(e)], antes, reason: 'vuelve igual');
+  });
+
+  for (final (nombre, ancho, alto) in [
+    ('móvil', 412.0, 915.0),
+    ('escritorio', 1280.0, 720.0),
+  ]) {
+    for (final (pantalla, ruta, compra) in [
+      ('Mis listas', Rutas.misListas, false),
+      ('Nueva lista', Rutas.nuevaLista, false),
+      ('Lista', Rutas.lista('1'), false),
+      ('Modo compra', Rutas.lista('1'), true),
+      ('Buscar', Rutas.buscar('1'), false),
+      ('Detalle', Rutas.producto('1', 'p5'), false),
+    ]) {
+      testWidgets('$pantalla ($nombre): controles de mirada separados', (
+        tester,
+      ) async {
+        await arrancar(tester, ruta: ruta);
+        tester.view.physicalSize = Size(ancho, alto);
+        await asentar(tester);
+        if (compra) await tocar(tester, 'Terminar lista');
+        await activarMirada(tester);
+        // ignore: invalid_use_of_visible_for_testing_member
+        final rects = mirada.controlador.rectsObjetivos
+            .whereType<Rect>()
+            .toList();
+        expect(rects.length, greaterThanOrEqualTo(2));
+        for (final (i, a) in rects.indexed) {
+          for (final b in rects.skip(i + 1)) {
+            final dx = a.left > b.left ? a.left - b.right : b.left - a.right;
+            final dy = a.top > b.top ? a.top - b.bottom : b.top - a.bottom;
+            expect(
+              dx > dy ? dx : dy,
+              greaterThanOrEqualTo(40),
+              reason: '$a y $b',
+            );
+          }
+        }
+        expect(tester.takeException(), isNull);
+        await desactivarMirada();
+      });
+    }
+  }
+
+  testWidgets('Recorrido 3 con temblor, de casilla en casilla sin apartar la '
+      'vista', (tester) async {
+    await arrancar(tester, ruta: Rutas.lista('2'));
+    tester.view.physicalSize = const Size(1280, 900);
+    await asentar(tester);
+    await activarMirada(tester);
+    final temblor = MouseGazeSource(ruido: 60, aleatorio: Random(7));
+    Future<void> mirarTemblando(Pattern etiqueta) async {
+      final centro = tester.getCenter(find.bySemanticsLabel(etiqueta));
+      for (final fin = _t + const Duration(milliseconds: 3000); _t < fin;) {
+        _t += const Duration(milliseconds: 33);
+        mirada.controlador.procesar(temblor.conRuido(centro), _t);
+      }
+      await asentar(tester);
+    }
+
+    await mirarTemblando('Terminar lista');
+    for (final p in ['Pasta espagueti', 'Queso curado', 'Vino tinto']) {
+      await mirarTemblando(RegExp('^$p\n'));
+    }
+    await nodo(tester, '¡Compra completada! Has marcado los 3 productos.');
+    expectAnuncio(tester, '¡Compra completada! Has marcado los 3 productos.');
+    await desactivarMirada();
+  });
+
+  testWidgets('Lo que no cabe se alcanza con «Bajar» y «Subir» por mirada', (
+    tester,
+  ) async {
+    await arrancar(tester, ruta: Rutas.buscar('1'));
+    expect(find.bySemanticsLabel('Bajar'), findsNothing);
+    await activarMirada(tester);
+    final vino = find.bySemanticsLabel(RegExp(r'^Vino tinto\n'));
+    expect(vino.hitTestable(), findsNothing);
+    for (var i = 0; i < 10 && vino.hitTestable().evaluate().isEmpty; i++) {
+      await mirarA(tester, 'Bajar', 2200);
+      // Para repetir hay que apartar la vista del botón.
+      await apartarVista(tester, const Offset(5, 5));
+    }
+    expect(vino.hitTestable(), findsOne);
+    await desactivarMirada();
+    await asentar(tester);
+    expect(find.bySemanticsLabel('Bajar'), findsNothing);
   });
 }

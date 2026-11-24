@@ -95,7 +95,7 @@ class _CampoTextoState extends State<CampoTexto> {
 /// El OutlinedButton ya junta todos los textos en un único nodo con rol de
 /// botón; [etiquetaSemantica] solo hace falta cuando lo visible se leería
 /// mal (p. ej. «6 × 0,95 €»).
-class BotonFila extends StatelessWidget {
+class BotonFila extends StatelessWidget implements ControlDeMirada {
   const BotonFila({
     super.key,
     required this.titulo,

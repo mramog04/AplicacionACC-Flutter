@@ -51,8 +51,7 @@ class GazeSettings extends ChangeNotifier {
   }
 
   /// Hueco entre botones apilados: mayor con el modo mirada.
-  double get separacionBotones =>
-      _activo ? GazeConfig.separacionBotonesMirada : 8;
+  double get separacionBotones => _activo ? GazeConfig.separacionMirada : 8;
 
   Future<void> activar(bool valor) async {
     if (valor == _activo || (valor && !disponible)) return;

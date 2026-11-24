@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../data/almacen.dart';
 import '../data/datos_ejemplo.dart';
+import '../gaze/gaze_config.dart';
 import '../gaze/gaze_settings.dart';
 import '../gaze/gaze_target.dart';
 import '../router.dart';
@@ -73,6 +74,19 @@ class _ListaScreenState extends State<ListaScreen> {
   Widget _normal(ListaCompra lista) {
     final textos = Theme.of(context).textTheme;
     final vacia = lista.lineas.isEmpty;
+    final anadir = GazeTarget(
+      key: const ValueKey('boton-anadir'),
+      etiqueta: '+ Añadir producto',
+      alActivar: () => context.push(Rutas.buscar(lista.id)),
+      child: FilledButton(
+        onPressed: () => context.push(Rutas.buscar(lista.id)),
+        child: const Text('+ Añadir producto'),
+      ),
+    );
+    final terminar = _botonModo(
+      'Terminar lista',
+      vacia ? null : () => setState(() => _modoCompra = true),
+    );
     return PantallaBase(
       titulo: lista.nombre,
       botonIzquierdo: const BotonAtras(alternativa: Rutas.misListas),
@@ -131,20 +145,21 @@ class _ListaScreenState extends State<ListaScreen> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          GazeTarget(
-            key: const ValueKey('boton-anadir'),
-            etiqueta: '+ Añadir producto',
-            alActivar: () => context.push(Rutas.buscar(lista.id)),
-            child: FilledButton(
-              onPressed: () => context.push(Rutas.buscar(lista.id)),
-              child: const Text('+ Añadir producto'),
-            ),
-          ),
-          SizedBox(height: mirada.separacionBotones),
-          _botonModo(
-            'Terminar lista',
-            vacia ? null : () => setState(() => _modoCompra = true),
-          ),
+          // En modo mirada y con ancho, uno al lado del otro: la separación
+          // no le quita alto a la lista.
+          if (mirada.activo && MediaQuery.sizeOf(context).width >= 600)
+            Row(
+              children: [
+                Expanded(child: anadir),
+                SizedBox(width: mirada.separacionBotones),
+                Expanded(child: terminar),
+              ],
+            )
+          else ...[
+            anadir,
+            SizedBox(height: mirada.separacionBotones),
+            terminar,
+          ],
           if (vacia) ...[
             const SizedBox(height: 4),
             // El estado deshabilitado se explica con texto, no solo con el
@@ -215,7 +230,7 @@ class _ListaScreenState extends State<ListaScreen> {
 /// casilla, estado marcado/no marcado y nombre (título + subtítulo); no hace
 /// falta Semantics. Visualmente, marcado = tic + texto tachado (no solo
 /// color).
-class _CasillaProducto extends StatelessWidget {
+class _CasillaProducto extends StatelessWidget implements ControlDeMirada {
   const _CasillaProducto({required this.linea, required this.alCambiar});
 
   final LineaLista linea;
@@ -224,7 +239,7 @@ class _CasillaProducto extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tachado = linea.marcada ? TextDecoration.lineThrough : null;
-    return GazeTarget(
+    final casilla = GazeTarget(
       etiqueta: linea.producto.nombre,
       alActivar: () => alCambiar(!linea.marcada),
       child: AnilloFoco(
@@ -251,6 +266,11 @@ class _CasillaProducto extends StatelessWidget {
           ),
         ),
       ),
+    );
+    // Que la casilla agrandada por el modo mirada centre su contenido.
+    return ListTileTheme.merge(
+      minTileHeight: mirada.activo ? GazeConfig.ladoMinimoMirada : null,
+      child: casilla,
     );
   }
 }
@@ -332,32 +352,37 @@ Future<bool?> confirmarBorrado(BuildContext context, ListaCompra lista) {
                       '${contarProductos(lista.lineas.length)}. '
                       'No se puede deshacer.',
           ),
-          actionsOverflowButtonSpacing: mirada.separacionBotones,
           actions: [
-            GazeTarget(
-              etiqueta: 'Cancelar',
-              alActivar: cancelar,
-              child: OutlinedButton(
-                onPressed: cancelar,
-                child: const Text('Cancelar'),
-              ),
-            ),
-            if (mirada.activo) SizedBox(width: mirada.separacionBotones),
-            GazeTarget(
-              etiqueta: armado ? 'Confirmar borrado' : 'Sí, borrar',
-              alActivar: borrarPorMirada,
-              child: FilledButton.icon(
-                onPressed: borrar,
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.error,
-                  side: const BorderSide(
-                    color: AppColors.error,
-                    width: AppSizes.bordeControl,
+            Wrap(
+              alignment: WrapAlignment.end,
+              spacing: mirada.separacionBotones,
+              runSpacing: mirada.separacionBotones,
+              children: [
+                GazeTarget(
+                  etiqueta: 'Cancelar',
+                  alActivar: cancelar,
+                  child: OutlinedButton(
+                    onPressed: cancelar,
+                    child: const Text('Cancelar'),
                   ),
                 ),
-                icon: const Icon(Icons.delete_outline),
-                label: Text(armado ? 'Confirmar borrado' : 'Sí, borrar'),
-              ),
+                GazeTarget(
+                  etiqueta: armado ? 'Confirmar borrado' : 'Sí, borrar',
+                  alActivar: borrarPorMirada,
+                  child: FilledButton.icon(
+                    onPressed: borrar,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      side: const BorderSide(
+                        color: AppColors.error,
+                        width: AppSizes.bordeControl,
+                      ),
+                    ),
+                    icon: const Icon(Icons.delete_outline),
+                    label: Text(armado ? 'Confirmar borrado' : 'Sí, borrar'),
+                  ),
+                ),
+              ],
             ),
           ],
         );

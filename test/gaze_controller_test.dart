@@ -11,9 +11,7 @@ import 'package:lista_compra/gaze/gaze_controller.dart';
 import 'package:lista_compra/gaze/gaze_source.dart';
 
 /// Dos controles separados 250 px en horizontal: el centro de B queda a
-/// 300 px del borde de A, por encima del radio de salida (200). Con menos
-/// separación A no se soltaría nunca al mirar a B (ver «Un control a menos
-/// del radio de salida no se puede alcanzar directamente»).
+/// 300 px del borde de A, por encima del radio de salida (200).
 const rectA = Rect.fromLTWH(100, 100, 100, 50);
 const rectB = Rect.fromLTWH(450, 100, 100, 50);
 
@@ -163,26 +161,76 @@ void main() {
     expect(c.bloqueado, isNull);
   });
 
-  test('Un control a menos del radio de salida no se puede alcanzar '
-      'directamente (limitación del diseño pegajoso)', () {
-    const cerca = Rect.fromLTWH(250, 100, 100, 50); // a 50 px de A
-    final c = GazeController(muestrasSuavizado: 1);
-    c.registrar('A', ObjetivoMirada(rect: () => rectA, activar: () {}));
-    c.registrar('C', ObjetivoMirada(rect: () => cerca, activar: () {}));
-    var t = Duration.zero;
+  group('Controles vecinos (a 50 px, dentro del radio de salida)', () {
+    const vecino = Rect.fromLTWH(250, 100, 100, 50);
+    late GazeController c;
+    late List<String> activados;
+    late Duration t;
+
+    setUp(() {
+      c = GazeController(muestrasSuavizado: 1);
+      activados = [];
+      t = Duration.zero;
+      for (final (id, r) in [('A', rectA), ('C', vecino)]) {
+        c.registrar(
+          id,
+          ObjetivoMirada(rect: () => r, activar: () => activados.add(id)),
+        );
+      }
+    });
+
     void mirar(Offset p, int ms) {
       for (final fin = t + Duration(milliseconds: ms); t < fin; t += paso) {
         c.procesar(p, t);
       }
     }
 
-    mirar(rectA.center, 300);
-    mirar(cerca.center, 2000);
-    expect(c.bloqueado, 'A', reason: 'C está dentro del radio de salida de A');
-    // Hay que apartar la vista (más de 200 px, más de 400 ms) y volver.
-    mirar(const Offset(300, 600), 600);
-    mirar(cerca.center, 100);
-    expect(c.bloqueado, 'C');
+    test('se pasa al vecino mirándolo, sin apartar antes la vista', () {
+      mirar(rectA.center, 1000);
+      mirar(vecino.center, 300);
+      expect(c.bloqueado, 'A', reason: 'aún no han pasado 400 ms');
+      mirar(vecino.center, 200);
+      expect(c.bloqueado, 'C');
+      expect(c.progreso, lessThan(0.1), reason: 'el dwell empieza de cero');
+      mirar(vecino.center, 1600);
+      expect(activados, ['C'], reason: 'A no se activa por el camino');
+    });
+
+    test('mientras se mira al vecino, el dwell del bloqueado se congela', () {
+      mirar(rectA.center, 1400);
+      final antes = c.progreso;
+      mirar(vecino.center, 350);
+      expect(c.bloqueado, 'A');
+      expect(c.progreso, antes);
+      expect(activados, isEmpty);
+    });
+
+    test('un vistazo breve al vecino no cambia el objetivo', () {
+      mirar(rectA.center, 500);
+      mirar(vecino.center, 200);
+      mirar(rectA.center, 100);
+      mirar(vecino.center, 300);
+      mirar(rectA.center, 100);
+      expect(c.bloqueado, 'A');
+    });
+
+    test('mirar justo entre los dos no elige ninguno', () {
+      mirar(const Offset(225, 125), 2500);
+      expect(c.bloqueado, isNull);
+      expect(activados, isEmpty);
+    });
+
+    test('un control pequeño encima de otro grande gana', () {
+      c.registrar(
+        'fondo',
+        ObjetivoMirada(
+          rect: () => const Rect.fromLTWH(0, 0, 800, 800),
+          activar: () => activados.add('fondo'),
+        ),
+      );
+      mirar(rectA.center, 100);
+      expect(c.bloqueado, 'A');
+    });
   });
 
   test('Si el control bloqueado deja de verse, se suelta sin gracia', () {

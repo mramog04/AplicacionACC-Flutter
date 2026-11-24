@@ -1,14 +1,23 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
 import '../widgets/avisos.dart';
+import 'gaze_config.dart';
 import 'gaze_controller.dart';
 import 'gaze_settings.dart';
+
+/// Marca los widgets que son un control de mirada dentro del contenido de
+/// una pantalla (filas, casillas): con el modo activo, [PantallaBase] los
+/// separa más entre sí.
+abstract interface class ControlDeMirada {}
 
 /// Envuelve un control para que se pueda activar con la mirada.
 ///
 /// - Con el modo desactivado no añade nada visible ni semántico.
-/// - Con el modo activo registra su rectángulo en el [GazeController] y,
+/// - Con el modo activo agranda el control hasta el tamaño mínimo de mirada,
+///   registra su rectángulo en el [GazeController] y,
 ///   cuando está bloqueado, dibuja un borde grueso de acento y una barra con
 ///   el progreso del dwell (no se dibuja ningún punto de mirada).
 /// - Al activarse ejecuta [alActivar] (la misma acción que un toque) y lo
@@ -61,7 +70,13 @@ class _GazeTargetState extends State<GazeTarget> {
       r = r.intersect(cajaScroll.localToGlobal(Offset.zero) & cajaScroll.size);
     }
     r = r.intersect(Offset.zero & _pantalla);
-    return r.width > 0 && r.height > 0 ? r : null;
+    // Un control que asoma por el borde no cuenta: quedaría pegado al de la
+    // barra de al lado. Hay que desplazar hasta verlo bien.
+    final altoNecesario = math.min(
+      caja.size.height * 0.6,
+      GazeConfig.ladoMinimoMirada,
+    );
+    return r.width > 0 && r.height > 0 && r.height >= altoNecesario ? r : null;
   }
 
   void _activar() {
@@ -92,7 +107,13 @@ class _GazeTargetState extends State<GazeTarget> {
           fit: StackFit.passthrough,
           clipBehavior: Clip.none,
           children: [
-            hijo,
+            ConstrainedBox(
+              constraints: const BoxConstraints(
+                minWidth: GazeConfig.ladoMinimoMirada,
+                minHeight: GazeConfig.ladoMinimoMirada,
+              ),
+              child: hijo,
+            ),
             Positioned.fill(
               child: IgnorePointer(
                 child: ExcludeSemantics(

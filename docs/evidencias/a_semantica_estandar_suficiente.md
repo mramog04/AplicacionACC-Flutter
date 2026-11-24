@@ -2,7 +2,7 @@
 
 ## Casilla de producto en el modo compra: `CheckboxListTile`
 
-**Archivo:** `lib/screens/lista_screen.dart`, línea 231 (`_CasillaProducto`).
+**Archivo:** `lib/screens/lista_screen.dart`, línea 246 (`_CasillaProducto`).
 
 ```dart
 CheckboxListTile(

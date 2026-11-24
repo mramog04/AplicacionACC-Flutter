@@ -45,13 +45,25 @@ abstract final class GazeConfig {
   /// Frecuencia de muestreo de la fuente de ratón.
   static const Duration periodoRaton = Duration(milliseconds: 33);
 
-  /// Con el modo mirada activo: lado de los botones −/+ y hueco entre
-  /// ellos y el valor. Con 64 px de hueco, el centro de «+» queda a más de
-  /// [radioSalida] del borde de «−» (64 + 48 + 64 + 36 = 212 px), de modo que
-  /// se puede pasar de uno a otro.
-  static const double ladoBotonMirada = 72;
-  static const double separacionMirada = 64;
+  /// Decidir entre controles vecinos (cambia la especificación inicial, en
+  /// la que un control a menos de [radioSalida] no se podía alcanzar sin
+  /// apartar antes la vista):
+  /// - un control gana a otro si está más cerca por al menos este margen; si
+  ///   la mirada cae entre dos sin ganador, no se bloquea ninguno;
+  /// - mientras un vecino gana al bloqueado, el dwell se congela;
+  /// - si además la mirada está sobre el vecino (a [radioCambio] o menos)
+  ///   durante [tiempoCambio], pasa a ser el bloqueado y el dwell empieza.
+  static const double margenDecision = 24;
+  static const double radioCambio = 30;
+  static const Duration tiempoCambio = Duration(milliseconds: 400);
 
-  /// Hueco entre botones apilados (barra inferior, diálogos) en modo mirada.
-  static const double separacionBotonesMirada = 32;
+  /// Con el modo activo: tamaño mínimo de cada control y hueco entre
+  /// controles vecinos (filas, casillas, −/+, barra inferior, diálogos).
+  static const double ladoMinimoMirada = 88;
+  static const double separacionMirada = 72;
+
+  /// Ancho del carril con los botones «Subir» y «Bajar» (la mirada no puede
+  /// arrastrar la pantalla) y parte visible que desplaza cada activación.
+  static const double anchoCarrilMirada = 96;
+  static const double fraccionDesplazamiento = 0.7;
 }

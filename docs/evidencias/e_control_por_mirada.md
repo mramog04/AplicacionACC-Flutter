@@ -7,8 +7,8 @@ Es un modo **solo para Flutter web**, que viene **desactivado por defecto**. Se 
 | Parte | Estado |
 |---|---|
 | **Fuente de ratón con temblor simulado** | Funciona. Probada con pruebas automáticas y **en Chrome**, con eventos de puntero reales sobre la compilación web: bloqueo con borde y barra de progreso, activación, rearme tras navegar y el recorrido 3 completo (marcar las 3 casillas y ver «¡Compra completada!»). |
-| **Cámara (WebGazer)** | **No verificada con una cámara.** En Chrome sí está comprobado lo siguiente: WebGazer.js 3.5.3 se carga (la integridad SRI es correcta) y el contexto es seguro en `localhost`. Al elegir «Cámara» aparece el aviso de privacidad. Al denegar el permiso, `begin()` falla, la app sigue con el ratón y muestra el motivo. **No he podido comprobar que la estimación de la mirada con una cámara real funcione ni cuánta precisión tiene.** |
-| Calibración de 9 puntos × 5 clics | Implementada (`lib/screens/calibracion_screen.dart`). No se ha probado con cámara. |
+| **Cámara (WebGazer)** | Probada por el grupo en un PC con cámara: funciona, pero costaba elegir entre botones próximos (de ahí los cambios de separación y de decisión entre vecinos, que con cámara **están pendientes de volver a probar**). La precisión no está medida. Con un vídeo simulado en Chrome está comprobado que el modelo facial carga, que la cámara se apaga al desactivar el modo y que se puede volver a encender. |
+| Calibración de 9 puntos × 5 clics | Con vídeo simulado: se registran los 45 clics en los 9 puntos. |
 | Estado «Esperando el permiso de la cámara…» | Cubierto por pruebas unitarias con una cámara simulada (`test/gaze_settings_test.dart`). En el navegador automatizado el permiso se denegaba solo, así que no se pudo ver el aviso de permiso. |
 
 ## Parámetros (`lib/gaze/gaze_config.dart`)
@@ -22,8 +22,10 @@ Es un modo **solo para Flutter web**, que viene **desactivado por defecto**. Se 
 | `dwell` | 1500 ms | Tiempo con el control bloqueado para activarlo. El progreso se reinicia al soltar o cambiar de control |
 | `repetirSinSoltar` | `false` | Tras activar, no se repite hasta soltar el control |
 | `ruidoRatonPorDefecto` | 30 px | Temblor simulado de la fuente de ratón (ajustable de 0 a 150 en Ajustes) |
-| `ladoBotonMirada` / `separacionMirada` | 72 / 64 px | Botones −/+ más grandes y separados con el modo activo |
-| `separacionBotonesMirada` | 32 px | Hueco entre botones apilados (barra inferior, diálogo) con el modo activo |
+| `ladoMinimoMirada` / `separacionMirada` | 88 / 72 px | Con el modo activo, tamaño mínimo de cada control y hueco entre vecinos (filas, casillas, −/+, barra inferior y diálogo) |
+| `margenDecision` | 24 px | Un control gana a otro si está más cerca por este margen; si ninguno gana, no se bloquea ninguno |
+| `radioCambio` / `tiempoCambio` | 30 px / 400 ms | Mirando así a un vecino, pasa a ser el bloqueado |
+| `anchoCarrilMirada` / `fraccionDesplazamiento` | 96 px / 0,7 | Botones «Subir» y «Bajar», y cuánto desplazan |
 
 ### Añadidos a la especificación (detectados al probar)
 
@@ -35,7 +37,12 @@ Es un modo **solo para Flutter web**, que viene **desactivado por defecto**. Se 
    - **Solución:** tras una activación no se bloquea nada nuevo hasta que la mirada se aleja más de `radioEntrada` del punto de activación.
 3. **Soltar enseguida un control que deja de verse.** Si un diálogo lo tapa o se cambia de pantalla, el control se suelta sin esperar la gracia.
 
-Los tres son constantes o código aislado en `gaze_controller.dart` y tienen su prueba en `test/gaze_controller_test.dart`.
+4. **Paso directo a un control vecino** (cambia la regla inicial).
+   - **Problema:** un control a menos de `radioSalida` del bloqueado no se alcanzaba sin apartar antes la vista, y mientras tanto podía activarse el que no se quería.
+   - **Solución:** si un vecino está claramente más cerca, el dwell del bloqueado se congela; si se le mira durante `tiempoCambio`, pasa a ser el bloqueado. Entre dos sin ganador claro no se elige ninguno.
+5. **«Subir» y «Bajar».** Con más separación cabe menos contenido y con la vista no se puede arrastrar la pantalla. Solo aparecen con el modo activo y si el contenido no cabe.
+
+Son constantes o código aislado en `gaze_controller.dart` y tienen su prueba en `test/gaze_controller_test.dart`.
 
 ## Accesibilidad y seguridad
 
@@ -44,28 +51,31 @@ Los tres son constantes o código aislado en `gaze_controller.dart` y tienen su 
 - **Activar por mirada equivale a tocar.** `GazeTarget` llama a la misma función que `onPressed` y anuncia «Activado con la mirada: …» al lector de pantalla.
 - **Privacidad.** Antes de encender la cámara aparece un diálogo que explica que el vídeo se procesa en el navegador, que no se graba, no se guarda y no sale del dispositivo. Además:
   - WebGazer se configura con `saveDataAcrossSessions(false)` y sin vista previa ni puntos;
-  - al desactivar el modo, la cámara se apaga (`webgazer.end()`).
+  - al desactivar el modo, la cámara se apaga (`stopVideo()` además de `end()`, que por sí solo la dejaba encendida);
+  - solo se aprende de los clics de calibración, no de los movimientos del ratón.
+
+  Que el vídeo no sale del dispositivo es lo que declara WebGazer y cómo está planteado (la estimación se calcula en el navegador); no se ha auditado su tráfico de red.
 - **Acciones destructivas.** Con la mirada, «Borrar lista» necesita dos pasos dentro del diálogo:
   1. La primera activación de «Sí, borrar» lo convierte en «Confirmar borrado» y lo anuncia.
   2. Hay que apartar la vista y volver a mirarlo.
 
   Con el dedo o el teclado basta una pulsación, porque el diálogo ya es la confirmación.
-- **Más separación con el modo activo:** −/+ de 72 px separados 64 px, y 32 px entre botones apilados.
+- **Más separación con el modo activo:** controles de al menos 88 px con 72 px entre vecinos. Un control que solo asoma por el borde no se puede bloquear hasta verse bien.
 
 ## Limitaciones
 
 - **Solo web.** En Android o escritorio, Ajustes lo indica y el interruptor está deshabilitado.
-- **Precisión baja de la cámara.** WebGazer con una webcam suele tener errores de cientos de píxeles. Por eso los radios son grandes, y es probable que con cámara real haya que aumentarlos o agrandar los botones. **No está medido.**
-- **Controles próximos.** Con la histéresis especificada, un control a menos de 200 px del bloqueado **no se alcanza directamente**: hay que apartar la vista a una zona vacía y volver. Es lo que pasa en las casillas del modo compra y en las filas de las listas. Está comprobado en Chrome y lo documenta un test.
-- **No hay scroll por mirada.** Lo que queda fuera de la pantalla no se puede alcanzar sin desplazar con otro medio.
+- **Precisión limitada de la cámara.** Depende de la luz, la postura y la calibración. **No está medida**; por eso los controles son grandes y están separados.
+- **«Subir»/«Bajar» no se repiten solos:** para repetir hay que apartar la vista y volver. En pantallas estrechas el carril quita ancho al contenido.
 - **No se puede escribir con la mirada.** «Nueva lista» necesita un nombre, así que el recorrido 1 no se completa solo con la mirada.
-- **Calibración no probada con cámara.**
-- **Privacidad.** WebGazer.js se descarga desde jsDelivr al abrir la app (con SRI), aunque el modo esté apagado. La cámara solo se enciende si el usuario la elige y acepta.
+- **La calibración no se guarda:** se pierde al recargar o cambiar el tamaño de la ventana.
+- **Licencia.** WebGazer 3.5.3 es GPL-3.0-or-later.
+- **Privacidad.** El modelo facial (unos 10 MB) se descarga de jsDelivr al encender la cámara. WebGazer.js se descarga desde jsDelivr al abrir la app (con SRI), aunque el modo esté apagado. La cámara solo se enciende si el usuario la elige y acepta.
 
 ## Cómo probarlo con `MouseGazeSource`
 
 ```bash
-flutter build web
+flutter build web --no-web-resources-cdn    # sin depender de la CDN de Google
 cd build/web && python3 -m http.server 8765    # o: flutter run -d chrome
 # abrir http://localhost:8765  (localhost cuenta como contexto seguro)
 ```
@@ -73,7 +83,7 @@ cd build/web && python3 -m http.server 8765    # o: flutter run -d chrome
 1. *Ajustes → Control por mirada (experimental)*: actívalo. La fuente por defecto es «Ratón con temblor simulado».
 2. Deja el puntero **quieto** sobre un botón sin hacer clic. Unos 0,4 s después aparece el borde y la barra se llena; a los 1,5 s se activa.
 3. Sube «Temblor simulado» (por ejemplo, a 120 px) para ver que el objetivo no salta por el ruido.
-4. Para pasar a un control vecino, aparta el puntero a una zona vacía y vuelve.
+4. Para pasar a un control vecino, muévete a él: el primero se congela y a los 0,4 s cambia.
 5. Para probar la cámara: elige «Cámara (WebGazer)», acepta el aviso y el permiso del navegador, y después pulsa *Calibrar (9 puntos)*.
 
 > Si recompilas, el navegador puede seguir usando el `main.dart.js` antiguo desde su caché. Me pasó al probar: usa una ventana privada o vacía la caché.
@@ -82,6 +92,6 @@ cd build/web && python3 -m http.server 8765    # o: flutter run -d chrome
 
 | Archivo | Qué prueba |
 |---|---|
-| `test/gaze_controller_test.dart` | Bloqueo dentro del radio de entrada. El ruido de hasta 150 px no cambia el objetivo. Se suelta solo tras la gracia; un parpadeo no lo suelta. El dwell activa una vez, se reinicia al cambiar de objetivo y se congela en la gracia. Suavizado y valores atípicos, pausa, salto de la vista, rearme tras activar y la limitación de los controles próximos. |
+| `test/gaze_controller_test.dart` | Bloqueo dentro del radio de entrada. El ruido de hasta 150 px no cambia el objetivo. Se suelta solo tras la gracia; un parpadeo no lo suelta. El dwell activa una vez, se reinicia al cambiar de objetivo y se congela en la gracia. Suavizado y valores atípicos, pausa, salto de la vista, rearme tras activar, y paso entre controles vecinos (cambio, congelado, vistazo breve, duda entre dos). |
 | `test/gaze_settings_test.dart` | Desactivado por defecto; espera del permiso; permiso concedido tarde tras volver al ratón; fallo con motivo; apagado de la cámara. |
-| `test/gaze_widget_test.dart` | Activación desde Ajustes con aviso de privacidad y uso del ratón cuando no hay cámara; «Aumentar unidades» por mirada con su anuncio; recorrido 2 completo por mirada; «Borrar lista» en dos pasos; guías con el modo activo; el modo no cambia el tamaño de los botones. |
+| `test/gaze_widget_test.dart` | Activación desde Ajustes con aviso de privacidad y uso del ratón cuando no hay cámara; «Aumentar unidades» por mirada con su anuncio; recorrido 2 completo por mirada; «Borrar lista» en dos pasos; guías con el modo activo; separación real en 6 pantallas (móvil y escritorio); recorrido 3 con temblor de casilla en casilla; «Subir»/«Bajar». |

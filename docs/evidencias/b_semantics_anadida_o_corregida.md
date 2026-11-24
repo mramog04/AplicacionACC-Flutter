@@ -20,7 +20,7 @@
 
 ## 2. Título de pantalla que no se anunciaba al navegar
 
-**Archivo:** `lib/widgets/pantalla_base.dart`, línea 32.
+**Archivo:** `lib/widgets/pantalla_base.dart`, línea 34.
 
 **Problema.** El título tenía `header: true`, pero la app no usa `AppBar`, que es quien normalmente marca el título con `namesRoute`. Sin eso, al cambiar de pantalla TalkBack no anunciaba en qué pantalla se estaba.
 
@@ -30,7 +30,7 @@
 
 ## 3. Fila de producto con «6 × 0,95 €»
 
-**Archivo:** `lib/screens/lista_screen.dart`, línea 122 (`etiquetaSemantica`), y `BotonFila` en `lib/widgets/controles.dart`, línea 143.
+**Archivo:** `lib/screens/lista_screen.dart`, línea 136 (`etiquetaSemantica`), y `BotonFila` en `lib/widgets/controles.dart`, línea 143.
 
 **Problema.** El texto visible «6 × 0,95 €» lo leería un lector como «6 por 0,95 euros» o «6 multiplicado por…», y el subtotal quedaba suelto.
 

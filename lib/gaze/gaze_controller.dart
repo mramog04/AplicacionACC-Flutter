@@ -69,6 +69,10 @@ class GazeController extends ChangeNotifier {
   Duration _acumulado = Duration.zero;
   Duration? _ultimaMarca;
   Duration? _fueraDesde;
+
+  /// Vecino al que se está mirando y desde cuándo (para cambiar a él).
+  Object? _rival;
+  Duration? _rivalDesde;
   bool _yaActivado = false;
 
   /// Punto donde se activó el último control. Hasta que la mirada se aleje
@@ -167,24 +171,49 @@ class GazeController extends ChangeNotifier {
     _bloqueado = null;
     _acumulado = Duration.zero;
     _fueraDesde = null;
+    _rival = null;
+    _rivalDesde = null;
     _yaActivado = false;
     if (habia && notificar) notifyListeners();
   }
 
-  /// Control más cercano a [p] dentro de [radioEntrada], o null.
+  /// Controles visibles ordenados por distancia a [p]; a igual distancia
+  /// (uno encima de otro, p. ej. el botón flotante sobre una fila) va antes
+  /// el más pequeño.
+  List<(Object, double)> _porCercania(Offset p, {Object? excepto}) {
+    final lista = <(Object, double, double)>[
+      for (final MapEntry(key: id, value: o) in _objetivos.entries)
+        if (id != excepto)
+          if (o.rect() case final r? when !r.isEmpty)
+            (id, distanciaARect(p, r), r.width * r.height),
+    ];
+    lista.sort((a, b) {
+      final porDistancia = a.$2.compareTo(b.$2);
+      return porDistancia != 0 ? porDistancia : a.$3.compareTo(b.$3);
+    });
+    return [for (final (id, d, _) in lista) (id, d)];
+  }
+
+  /// Control más cercano a [p] dentro de [radioEntrada], o null si no hay o
+  /// si la mirada cae entre dos sin que uno esté claramente más cerca.
   Object? _masCercano(Offset p) {
-    Object? mejor;
-    var mejorDist = double.infinity;
-    for (final MapEntry(key: id, value: o) in _objetivos.entries) {
-      final r = o.rect();
-      if (r == null || r.isEmpty) continue;
-      final d = distanciaARect(p, r);
-      if (d <= radioEntrada && d < mejorDist) {
-        mejor = id;
-        mejorDist = d;
-      }
-    }
-    return mejor;
+    final lista = _porCercania(p);
+    if (lista.isEmpty) return null;
+    final (id, d) = lista.first;
+    if (d > radioEntrada) return null;
+    final dudoso =
+        d > 0 &&
+        lista.length > 1 &&
+        lista[1].$2 - d < GazeConfig.margenDecision;
+    return dudoso ? null : id;
+  }
+
+  /// Rearme tras una activación (ver [_puntoActivacion]).
+  bool _rearmado(Offset p) {
+    final punto = _puntoActivacion;
+    if (punto != null && (p - punto).distance <= radioEntrada) return false;
+    _puntoActivacion = null;
+    return true;
   }
 
   /// Procesa una muestra de mirada [muestra] tomada en el instante [ahora].
@@ -234,14 +263,33 @@ class GazeController extends ChangeNotifier {
       }
     }
 
+    // 1 bis. ¿Se está mirando a un vecino del objetivo bloqueado?
+    var ganaVecino = false;
+    if (_bloqueado != null) {
+      final d = distanciaARect(p, _objetivos[_bloqueado]!.rect()!);
+      final vecinos = _porCercania(p, excepto: _bloqueado);
+      final vecino = vecinos.firstOrNull;
+      ganaVecino = vecino != null && d - vecino.$2 >= GazeConfig.margenDecision;
+      if (ganaVecino && vecino.$2 <= GazeConfig.radioCambio && _estable()) {
+        if (_rival != vecino.$1) {
+          _rival = vecino.$1;
+          _rivalDesde = ahora;
+        }
+        if (ahora - _rivalDesde! >= GazeConfig.tiempoCambio && _rearmado(p)) {
+          _soltar(notificar: false);
+          _bloqueado = vecino.$1;
+          notifyListeners();
+          return;
+        }
+      } else {
+        _rival = null;
+      }
+    }
+
     // 2. Sin objetivo: bloquear el más cercano dentro del radio de entrada
     //    (solo con la mirada estable, ver GazeConfig).
     if (_bloqueado == null) {
-      // Rearme tras una activación (ver _puntoActivacion).
-      if (_puntoActivacion != null) {
-        if ((p - _puntoActivacion!).distance <= radioEntrada) return;
-        _puntoActivacion = null;
-      }
+      if (!_rearmado(p)) return;
       final nuevo = _estable() ? _masCercano(p) : null;
       if (nuevo != null) {
         _bloqueado = nuevo;
@@ -252,8 +300,8 @@ class GazeController extends ChangeNotifier {
     }
 
     // 3. Dwell: avanza solo mientras la mirada está dentro del radio de
-    //    salida (durante la gracia se congela).
-    if (_fueraDesde != null || _yaActivado) return;
+    //    salida y ningún vecino está claramente más cerca.
+    if (_fueraDesde != null || ganaVecino || _yaActivado) return;
     _acumulado += dt;
     if (_acumulado >= dwell) {
       final objetivo = _objetivos[_bloqueado];
