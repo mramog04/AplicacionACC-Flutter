@@ -286,4 +286,32 @@ void main() {
       await desactivarMirada();
     });
   }
+
+  for (final (ancho, separacionMinima) in [(1280.0, 400.0), (412.0, 150.0)]) {
+    testWidgets('− y + centrados y separados (ancho $ancho)', (tester) async {
+      await arrancar(tester, ruta: Rutas.producto('1', 'p1'));
+      tester.view.physicalSize = Size(ancho, 900);
+      await asentar(tester);
+      final antes = tester.getRect(find.bySemanticsLabel('Disminuir unidades'));
+      expect(antes.left, 16, reason: 'sin el modo, a la izquierda');
+      await activarMirada(tester);
+      final menos = tester.getRect(
+        await mostrar(tester, find.bySemanticsLabel('Disminuir unidades')),
+      );
+      final mas = tester.getRect(find.bySemanticsLabel('Aumentar unidades'));
+      expect(mas.left - menos.right, greaterThanOrEqualTo(separacionMinima));
+      expect((menos.center.dx + mas.center.dx) / 2, closeTo(ancho / 2, 90));
+      await mirarA(tester, 'Aumentar unidades', 2200);
+      expect(await nodoUnidades(tester), isSemantics(value: '7'));
+      await mirarA(tester, 'Disminuir unidades', 2600);
+      expect(await nodoUnidades(tester), isSemantics(value: '6'));
+      await desactivarMirada();
+      await asentar(tester);
+      expect(
+        tester.getRect(find.bySemanticsLabel('Disminuir unidades')),
+        antes,
+        reason: 'con el modo apagado queda como estaba',
+      );
+    });
+  }
 }

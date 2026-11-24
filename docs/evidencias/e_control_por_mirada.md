@@ -24,6 +24,7 @@ Es un modo **solo para Flutter web**, que viene **desactivado por defecto**. Se 
 | `ruidoRatonPorDefecto` | 30 px | Temblor simulado de la fuente de ratón (ajustable de 0 a 150 en Ajustes) |
 | `ladoMinimoMirada` / `separacionMirada` | 88 / 72 px | Con el modo activo, tamaño mínimo de cada control y hueco entre vecinos (filas, casillas, −/+, barra inferior y diálogo) |
 | `altoFilaMirada` / `separacionFilasMirada` | 96 / 160 px | Filas de las listas: unos 250 px entre centros |
+| `ladoUnidadesMirada` / `separacionUnidadesMirada` | 112 / 200 px | −/+ centrados: lado y hueco máximo a cada lado del valor (448 px entre − y + en pantalla ancha) |
 | `distanciaMinCm` / `distanciaMaxCm` | 50 / 70 cm | Distancia a la cámara recomendada |
 | `margenDecision` | 24 px | Un control gana a otro si está más cerca por este margen; si ninguno gana, no se bloquea ninguno |
 | `radioCambio` / `tiempoCambio` | 30 px / 400 ms | Mirando así a un vecino, pasa a ser el bloqueado |

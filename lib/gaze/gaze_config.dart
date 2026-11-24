@@ -68,6 +68,11 @@ abstract final class GazeConfig {
   static const double altoFilaMirada = 96;
   static const double separacionFilasMirada = 160;
 
+  /// Selector de unidades: lado de «−» y «+» si hay ancho, y hueco máximo
+  /// entre cada uno y el valor (se reduce si no cabe).
+  static const double ladoUnidadesMirada = 112;
+  static const double separacionUnidadesMirada = 200;
+
   /// Distancia a la cámara recomendada (la habitual en los estudios con
   /// cámara web) y datos para estimarla: distancia media entre las comisuras
   /// externas de los ojos y ángulo de visión horizontal típico de una cámara.

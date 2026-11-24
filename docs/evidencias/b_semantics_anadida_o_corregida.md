@@ -2,7 +2,7 @@
 
 ## 1. Selector de unidades (`SelectorUnidades`)
 
-**Archivo:** `lib/widgets/controles.dart`, líneas 171–261.
+**Archivo:** `lib/widgets/controles.dart`, líneas 171–266.
 
 **Problema.** Es un componente compuesto (− · número · +).
 - En la versión anterior, los botones se llamaban «Quitar una unidad» y «Añadir una unidad» solo mediante `tooltip`.
@@ -10,9 +10,9 @@
 - Además, Flutter ordenaba por geometría y leía el número **antes** que «−».
 
 **Qué se hizo.**
-- Los botones −/+ tienen nombre propio en la **etiqueta** del icono: «Disminuir unidades» y «Aumentar unidades» (`_BotonIcono`, línea 268). El tooltip sigue siendo visible al mantener pulsado, pero se excluye de la semántica (`excludeFromSemantics: true`, línea 288) para que el nombre no se lea dos veces.
-- El número es un nodo con `label: 'Unidades'` y `value: '3'` (línea 223). Además tiene `onIncrease`/`onDecrease` con `increasedValue`/`decreasedValue`, así que en TalkBack también se ajusta deslizando arriba/abajo, como un control deslizante. En el mínimo (1) no se ofrece la acción de bajar.
-- Las claves `OrdinalSortKey` (línea 202) fuerzan el orden visual: «−», «Unidades 1», «+».
+- Los botones −/+ tienen nombre propio en la **etiqueta** del icono: «Disminuir unidades» y «Aumentar unidades» (`_BotonIcono`, línea 273). El tooltip sigue siendo visible al mantener pulsado, pero se excluye de la semántica (`excludeFromSemantics: true`, línea 293) para que el nombre no se lea dos veces.
+- El número es un nodo con `label: 'Unidades'` y `value: '3'` (línea 228). Además tiene `onIncrease`/`onDecrease` con `increasedValue`/`decreasedValue`, así que en TalkBack también se ajusta deslizando arriba/abajo, como un control deslizante. En el mínimo (1) no se ofrece la acción de bajar.
+- Las claves `OrdinalSortKey` (línea 206) fuerzan el orden visual: «−», «Unidades 1», «+».
 - «−» deshabilitado en 1: además del estado semántico, se muestra el texto «Mínimo: 1 unidad.» para no depender solo del gris.
 - Al cambiar el valor, el lector anuncia «3 unidades. Subtotal: 12,30 €» mediante `RegionViva` (`lib/screens/detalle_producto_screen.dart`) **sin mover el foco** del botón.
 

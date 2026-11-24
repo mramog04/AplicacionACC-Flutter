@@ -176,6 +176,7 @@ class SelectorUnidades extends StatelessWidget {
     this.minimo = 1,
     this.separacion = AppSizes.separacion,
     this.tamanoBoton = AppSizes.minControl,
+    this.centrado = false,
   });
 
   final int valor;
@@ -184,6 +185,9 @@ class SelectorUnidades extends StatelessWidget {
 
   /// Hueco entre «−», valor y «+» (mayor en el modo mirada).
   final double separacion;
+
+  /// Centrado a lo ancho (modo mirada).
+  final bool centrado;
 
   /// Lado mínimo de los botones «−» y «+».
   final double tamanoBoton;
@@ -206,6 +210,7 @@ class SelectorUnidades extends StatelessWidget {
       child: Wrap(
         spacing: separacion,
         runSpacing: separacion,
+        alignment: centrado ? WrapAlignment.center : WrapAlignment.start,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           enOrden(

@@ -52,6 +52,18 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
     context.go(Rutas.lista(widget.idLista));
   }
 
+  Widget _selector({
+    double lado = AppSizes.minControl,
+    double separacion = AppSizes.separacion,
+    bool centrado = false,
+  }) => SelectorUnidades(
+    valor: _unidades,
+    alCambiar: (v) => setState(() => _unidades = v),
+    separacion: separacion,
+    tamanoBoton: lado,
+    centrado: centrado,
+  );
+
   @override
   Widget build(BuildContext context) {
     final producto = buscarProducto(widget.idProducto);
@@ -97,18 +109,28 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
         const SizedBox(height: AppSizes.margen),
         const Subtitulo('Unidades'),
         const SizedBox(height: AppSizes.separacion),
-        // Con el modo mirada, botones más grandes y más separados.
+        // Con el modo mirada: centrado, botones más grandes y tan separados
+        // como permita el ancho.
         ListenableBuilder(
           listenable: mirada,
-          builder: (context, _) => SelectorUnidades(
-            valor: _unidades,
-            alCambiar: (v) => setState(() => _unidades = v),
-            separacion: mirada.activo
-                ? GazeConfig.separacionMirada
-                : AppSizes.separacion,
-            tamanoBoton: mirada.activo
-                ? GazeConfig.ladoMinimoMirada
-                : AppSizes.minControl,
+          builder: (context, _) => LayoutBuilder(
+            builder: (context, zona) {
+              if (!mirada.activo) return _selector();
+              final lado = zona.maxWidth >= 600
+                  ? GazeConfig.ladoUnidadesMirada
+                  : GazeConfig.ladoMinimoMirada;
+              final libre = zona.maxWidth - 2 * lado - AppSizes.minControl;
+              return Center(
+                child: _selector(
+                  lado: lado,
+                  centrado: true,
+                  separacion: (libre / 2).clamp(
+                    GazeConfig.separacionMirada,
+                    GazeConfig.separacionUnidadesMirada,
+                  ),
+                ),
+              );
+            },
           ),
         ),
         if (_unidades == 1) ...[
