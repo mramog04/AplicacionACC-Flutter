@@ -17,6 +17,9 @@ abstract class GazeSource {
 
   Future<void> detener();
 
+  /// Apertura de los ojos en cada fotograma (null = no se ve la cara).
+  Stream<double?> get aperturas => const Stream.empty();
+
   /// Distancia aproximada de la cara a la cámara en cm, o null si no se ve
   /// ninguna cara (o la fuente no es una cámara).
   double? get distanciaCm => null;
@@ -86,6 +89,9 @@ class MouseGazeSource implements GazeSource {
     _timer?.cancel();
     _timer = null;
   }
+
+  @override
+  Stream<double?> get aperturas => const Stream.empty();
 
   @override
   double? get distanciaCm => null;

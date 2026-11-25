@@ -73,6 +73,22 @@ abstract final class GazeConfig {
   static const double ladoUnidadesMirada = 112;
   static const double separacionUnidadesMirada = 200;
 
+  /// Ojos cerrados este tiempo: pausa o reanuda las pulsaciones (modo
+  /// «Mirar, con pausa»). Un parpadeo normal es bastante más corto.
+  static const Duration tiempoPausaOjos = Duration(milliseconds: 800);
+
+  /// Doble parpadeo: duración máxima de cada uno y tiempo máximo entre ellos.
+  static const Duration parpadeoMaximo = Duration(milliseconds: 450);
+  static const Duration huecoEntreParpadeos = Duration(milliseconds: 600);
+
+  /// Tras abrir los ojos se ignora la mirada este tiempo: la estimación
+  /// tarda en asentarse.
+  static const Duration esperaTrasAbrir = Duration(milliseconds: 250);
+
+  /// Sin calibrar los ojos: se consideran cerrados por debajo de esta
+  /// fracción de su apertura habitual.
+  static const double fraccionCerrados = 0.6;
+
   /// Distancia a la cámara recomendada (la habitual en los estudios con
   /// cámara web) y datos para estimarla: distancia media entre las comisuras
   /// externas de los ojos y ángulo de visión horizontal típico de una cámara.

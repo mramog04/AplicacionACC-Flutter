@@ -20,6 +20,9 @@ class WebGazerGazeSource implements GazeSource {
   Future<void> detener() async {}
 
   @override
+  Stream<double?> get aperturas => const Stream.empty();
+
+  @override
   double? get distanciaCm => null;
 
   @override

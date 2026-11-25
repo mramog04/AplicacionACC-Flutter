@@ -81,6 +81,9 @@ class GazeController extends ChangeNotifier {
   Offset? _puntoActivacion;
   bool pausado = false;
 
+  /// Activar por permanencia. Desactivado en el modo de doble parpadeo.
+  bool dwellActivo = true;
+
   /// Control bloqueado ahora mismo (o null).
   Object? get bloqueado => _bloqueado;
 
@@ -167,7 +170,9 @@ class GazeController extends ChangeNotifier {
   Duration _avanzarReloj(Duration ahora) {
     final dt = _ultimaMarca == null ? Duration.zero : ahora - _ultimaMarca!;
     _ultimaMarca = ahora;
-    return dt;
+    // Tras un hueco sin muestras (ojos cerrados) no se suma todo de golpe.
+    const maximo = Duration(milliseconds: 100);
+    return dt > maximo ? maximo : dt;
   }
 
   void _soltar({bool notificar = true}) {
@@ -253,8 +258,8 @@ class GazeController extends ChangeNotifier {
     }
     final p = _media();
     final dt = _avanzarReloj(ahora);
-    if (pausado) return;
     punto.value = p;
+    if (pausado) return;
 
     // 1. Mantener o soltar el objetivo bloqueado (histéresis).
     if (_bloqueado != null) {
@@ -306,7 +311,9 @@ class GazeController extends ChangeNotifier {
 
     // 3. Dwell: avanza solo mientras la mirada está dentro del radio de
     //    salida y ningún vecino está claramente más cerca.
-    if (_fueraDesde != null || ganaVecino || _yaActivado) return;
+    if (_fueraDesde != null || ganaVecino || _yaActivado || !dwellActivo) {
+      return;
+    }
     _acumulado += dt;
     if (_acumulado >= dwell) {
       final objetivo = _objetivos[_bloqueado];
@@ -324,6 +331,14 @@ class GazeController extends ChangeNotifier {
     }
   }
 
+  /// Activa ahora mismo el control [id] si sigue a la vista (doble
+  /// parpadeo).
+  void activar(Object id) {
+    final objetivo = _objetivos[id];
+    if (pausado || objetivo == null || objetivo.rect() == null) return;
+    objetivo.activar();
+  }
+
   // --- Conexión con una fuente real ---------------------------------------
 
   StreamSubscription<Offset>? _sub;
@@ -331,16 +346,22 @@ class GazeController extends ChangeNotifier {
 
   /// Empieza a escuchar [fuente]. Las marcas de tiempo salen de un reloj
   /// propio.
-  /// [ajustar] transforma cada muestra (corrección, límites de pantalla).
-  void escuchar(GazeSource fuente, {Offset Function(Offset)? ajustar}) {
+  /// [ajustar] transforma cada muestra (corrección, límites de pantalla);
+  /// [aceptar] dice si vale (no, con los ojos cerrados).
+  void escuchar(
+    GazeSource fuente, {
+    Offset Function(Offset)? ajustar,
+    bool Function()? aceptar,
+  }) {
     _sub?.cancel();
     reiniciar();
     _reloj
       ..reset()
       ..start();
-    _sub = fuente.muestras.listen(
-      (m) => procesar(ajustar?.call(m) ?? m, _reloj.elapsed),
-    );
+    _sub = fuente.muestras.listen((m) {
+      if (aceptar != null && !aceptar()) return;
+      procesar(ajustar?.call(m) ?? m, _reloj.elapsed);
+    });
   }
 
   void dejarDeEscuchar() {

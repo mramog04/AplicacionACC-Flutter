@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../gaze/gaze_eyes.dart';
 import '../gaze/gaze_settings.dart';
 import '../router.dart';
 import '../theme.dart';
@@ -198,6 +199,42 @@ class _SeccionMirada extends StatelessWidget {
             ),
           ],
           const SizedBox(height: AppSizes.margen),
+          Text('Cómo se pulsan los botones', style: textos.titleSmall),
+          const SizedBox(height: AppSizes.separacion),
+          _GrupoOpciones(
+            opciones: {for (final m in ModoMirada.values) m.name: m.nombre},
+            ayudas: {for (final m in ModoMirada.values) m.name: m.ayuda},
+            valor: mirada.modo.name,
+            alCambiar: (v) => mirada.modo = ModoMirada.values.byName(v),
+          ),
+          if (mirada.modo.usaOjos) ...[
+            const SizedBox(height: AppSizes.separacion),
+            if (mirada.fuente == FuenteMirada.camara)
+              ValueListenableBuilder(
+                valueListenable: mirada.ojosCerrados,
+                builder: (context, cerrados, _) => Row(
+                  children: [
+                    ExcludeSemantics(
+                      child: Icon(
+                        cerrados ? Icons.visibility_off : Icons.visibility,
+                      ),
+                    ),
+                    const SizedBox(width: AppSizes.separacion),
+                    Expanded(
+                      child: Text(
+                        'La cámara ve tus ojos: '
+                        '${cerrados ? 'cerrados' : 'abiertos'}.',
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              const Text(
+                'Este modo necesita la cámara. Con el ratón se usa «Mirar».',
+              ),
+          ],
+          const SizedBox(height: AppSizes.margen),
           AnilloFoco(
             child: SwitchListTile(
               title: const Text('Mostrar puntero de mirada'),
@@ -243,9 +280,13 @@ class _GrupoOpciones extends StatelessWidget {
     required this.opciones,
     required this.valor,
     required this.alCambiar,
+    this.ayudas = const {},
   });
 
   final Map<String, String> opciones;
+
+  /// Explicación opcional de cada opción.
+  final Map<String, String> ayudas;
   final String valor;
   final ValueChanged<String> alCambiar;
 
@@ -265,6 +306,7 @@ class _GrupoOpciones extends StatelessWidget {
               child: RadioListTile<String>(
                 value: e.key,
                 title: Text(e.value),
+                subtitle: ayudas[e.key] == null ? null : Text(ayudas[e.key]!),
                 shape: RoundedRectangleBorder(
                   side: const BorderSide(
                     color: AppColors.bordeControles,

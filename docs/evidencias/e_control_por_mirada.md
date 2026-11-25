@@ -53,6 +53,13 @@ Es un modo **solo para Flutter web**, que viene **desactivado por defecto**. Se 
 8. **Filas más separadas.** Con cámara no se distinguían dos filas a 72 px. Un estudio con un sistema basado en WebGazer da una precisión de calibración de 100–150 px ([arXiv 2308.06035](https://arxiv.org/pdf/2308.06035), con participantes a 50–70 cm, buena luz y poca cabeza en movimiento), así que hay unos 250 px entre centros. El botón flotante de Mis listas pasa a la barra inferior.
 9. **Distancia a la cámara.** Se estima con la separación entre los ojos (malla de WebGazer) y se avisa si no está entre 50 y 70 cm. Es **aproximada**: supone una cámara de 65° y una separación media de 9 cm. Comprobada con puntos de cara simulados, no con una cara real. También se recuerda la distancia a la que se calibró.
 
+10. **Tres modos de pulsar** (*Ajustes → Cómo se pulsan los botones*; los dos últimos necesitan la cámara):
+    - **Mirar:** permanencia de 1,5 s.
+    - **Mirar, con pausa:** ojos cerrados 0,8 s (`tiempoPausaOjos`) desactivan las pulsaciones y, repetido, las reactivan. Suena un pitido (grave al pausar, agudo al reanudar) porque con los ojos cerrados no se ve la pantalla, y aparece un aviso que también se anuncia.
+    - **Doble parpadeo:** mirar no pulsa; dos parpadeos de hasta 0,45 s separados 0,6 s como mucho pulsan el botón que se miraba al empezar.
+
+    Los ojos cerrados se detectan con la apertura de los párpados (malla de WebGazer). La calibración mide los ojos de cada persona cerrados y mirando abajo, para no confundirlos. Con los ojos cerrados o recién abiertos se ignora la mirada. Si se pierde la cara, no cuenta. **Comprobado con ojos simulados; con personas, pendiente.** Puede no servir a quien parpadea de forma involuntaria o no controla los párpados: por eso «Mirar» sigue siendo el modo por defecto.
+
 Son constantes o código aislado en `gaze_controller.dart` y tienen su prueba en `test/gaze_controller_test.dart`.
 
 ## Accesibilidad y seguridad
@@ -105,5 +112,6 @@ cd build/web && python3 -m http.server 8765    # o: flutter run -d chrome
 |---|---|
 | `test/gaze_controller_test.dart` | Bloqueo dentro del radio de entrada. El ruido de hasta 150 px no cambia el objetivo. Se suelta solo tras la gracia; un parpadeo no lo suelta. El dwell activa una vez, se reinicia al cambiar de objetivo y se congela en la gracia. Suavizado y valores atípicos, pausa, salto de la vista, rearme tras activar, y paso entre controles vecinos (cambio, congelado, vistazo breve, duda entre dos). |
 | `test/gaze_correction_test.dart` | Corrección de una mirada encogida; datos no fiables; estimación fuera de la pantalla; margen; calibración hasta las cuatro esquinas. |
+| `test/gaze_eyes_test.dart` | Ojos cerrados mantenidos, parpadeo normal, doble parpadeo, mirar abajo, pérdida de la cara y los tres modos. |
 | `test/gaze_settings_test.dart` | Desactivado por defecto; espera del permiso; permiso concedido tarde tras volver al ratón; fallo con motivo; apagado de la cámara. |
 | `test/gaze_widget_test.dart` | Activación desde Ajustes con aviso de privacidad y uso del ratón cuando no hay cámara; «Aumentar unidades» por mirada con su anuncio; recorrido 2 completo por mirada; «Borrar lista» en dos pasos; guías con el modo activo; separación real en 6 pantallas (móvil y escritorio); recorrido 3 con temblor de casilla en casilla; «Subir»/«Bajar». |

@@ -32,6 +32,9 @@ class CamaraSimulada implements GazeSource {
   Future<void> detener() async => encendida = false;
 
   @override
+  Stream<double?> get aperturas => ojos.stream;
+  final ojos = StreamController<double?>.broadcast(sync: true);
+  @override
   double? distanciaCm;
   @override
   void empezarCalibracion() {}

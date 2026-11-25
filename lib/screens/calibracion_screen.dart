@@ -3,7 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../gaze/gaze_correction.dart';
+import '../gaze/gaze_eyes.dart';
 import '../gaze/gaze_settings.dart';
+import '../gaze/sonido_stub.dart'
+    if (dart.library.js_interop) '../gaze/sonido_web.dart';
 import '../router.dart';
 import '../theme.dart';
 import '../widgets/avisos.dart';
@@ -17,6 +20,8 @@ import '../widgets/pantalla_base.dart';
 ///    hacer 5 clics. Cada clic le dice a WebGazer «ahora miro aquí».
 /// 2. Ajuste de bordes: mirar 5 puntos sin hacer clic. Se compara lo
 ///    estimado con el punto real y se corrige (ver [CorreccionMirada]).
+/// 3. Cerrar los ojos hasta oír un pitido, para distinguirlos de abiertos
+///    (también mirando abajo, que es cuando más se entornan).
 ///
 /// Mientras tanto la activación por mirada está en pausa.
 class CalibracionScreen extends StatefulWidget {
@@ -62,16 +67,22 @@ class _CalibracionScreenState extends State<CalibracionScreen> {
   StreamSubscription<Offset>? _sub;
   final _muestras = <Offset>[];
   final _pares = <(Offset, Offset)>[];
+  StreamSubscription<double?>? _subOjos;
+  final _aperturas = <double>[];
+  final _abiertos = <double>[];
+  bool _ojosMedidos = false;
 
   bool get _enClics => _punto < CalibracionScreen.puntos.length;
-  bool get _terminada =>
-      !_enClics && _ajuste >= CalibracionScreen.puntosAjuste.length;
+  bool get _enAjuste =>
+      !_enClics && _ajuste < CalibracionScreen.puntosAjuste.length;
+  bool get _terminada => !_enClics && !_enAjuste && _ojosMedidos;
 
   @override
   void initState() {
     super.initState();
     mirada.camara.empezarCalibracion();
     mirada.correccion = CorreccionMirada.identidad;
+    mirada.gestos.detector.umbral = null;
     // Tras el primer fotograma: notifica a la raíz de la app.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) mirada.calibrando = true;
@@ -82,6 +93,7 @@ class _CalibracionScreenState extends State<CalibracionScreen> {
   void dispose() {
     _timer?.cancel();
     _sub?.cancel();
+    _subOjos?.cancel();
     // Aplazado: durante dispose no se puede notificar.
     scheduleMicrotask(() => mirada.calibrando = false);
     super.dispose();
@@ -107,12 +119,45 @@ class _CalibracionScreenState extends State<CalibracionScreen> {
     if (!_enClics) _empezarPuntoAjuste();
   }
 
+  void _medirOjos() {
+    _aperturas.clear();
+    _subOjos = mirada.camara.aperturas.listen((a) {
+      if (a != null) _aperturas.add(a);
+    });
+  }
+
+  /// Mediana de lo medido, o null si hay muy pocas medidas.
+  double? _acabarOjos() {
+    _subOjos?.cancel();
+    if (_aperturas.length < CalibracionScreen.minimoMuestras) return null;
+    _aperturas.sort();
+    return _aperturas[_aperturas.length ~/ 2];
+  }
+
+  void _empezarOjosCerrados() {
+    _timer = Timer(CalibracionScreen.esperaAjuste, () {
+      _medirOjos();
+      _timer = Timer(CalibracionScreen.medidaAjuste, () {
+        final cerrados = _acabarOjos();
+        if (cerrados != null && _abiertos.isNotEmpty) {
+          mirada.gestos.detector.umbral = DetectorOjos.umbralDe(
+            abiertos: _abiertos.reduce((a, b) => a < b ? a : b),
+            cerrados: cerrados,
+          );
+        }
+        pitido(880);
+        setState(() => _ojosMedidos = true);
+      });
+    });
+  }
+
   void _empezarPuntoAjuste() {
     _muestras.clear();
     _midiendo = false;
     _timer = Timer(CalibracionScreen.esperaAjuste, () {
       setState(() => _midiendo = true);
       _sub = mirada.camara.muestras.listen(_muestras.add);
+      _medirOjos();
       _timer = Timer(CalibracionScreen.medidaAjuste, _acabarPuntoAjuste);
     });
   }
@@ -125,9 +170,11 @@ class _CalibracionScreenState extends State<CalibracionScreen> {
         CorreccionMirada.mediana(_muestras),
       ));
     }
+    if (_acabarOjos() case final abiertos?) _abiertos.add(abiertos);
     setState(() => _ajuste++);
-    if (_terminada) {
+    if (!_enAjuste) {
       mirada.correccion = CorreccionMirada.ajustar(_pares);
+      _empezarOjosCerrados();
     } else {
       _empezarPuntoAjuste();
     }
@@ -147,7 +194,13 @@ class _CalibracionScreenState extends State<CalibracionScreen> {
       return _pares.length < 3
           ? 'Calibración terminada, pero no se ha detectado bien tu mirada. '
                 'Comprueba la luz y que se te vea la cara, y repítela.'
+          : mirada.gestos.detector.umbral == null
+          ? 'Calibración terminada. No se distinguen bien tus ojos cerrados: '
+                'los modos que los usan pueden fallar.'
           : 'Calibración terminada.';
+    }
+    if (!_enClics && !_enAjuste) {
+      return 'Cierra los ojos y no los abras hasta oír el pitido.';
     }
     if (!_enClics) {
       return 'Ajuste de bordes, ${_ajuste + 1} de '
@@ -162,7 +215,7 @@ class _CalibracionScreenState extends State<CalibracionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final actual = _terminada || !_empezada
+    final actual = !_empezada || (!_enClics && !_enAjuste)
         ? null
         : _enClics
         ? CalibracionScreen.puntos[_punto]

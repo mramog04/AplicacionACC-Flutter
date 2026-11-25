@@ -64,6 +64,7 @@ const _rutaModelo =
 /// vídeo en el navegador.
 class WebGazerGazeSource implements GazeSource {
   final _controlador = StreamController<Offset>.broadcast();
+  final _ojos = StreamController<double?>.broadcast();
   bool _iniciada = false;
 
   @override
@@ -71,6 +72,28 @@ class WebGazerGazeSource implements GazeSource {
 
   @override
   Stream<Offset> get muestras => _controlador.stream;
+
+  @override
+  Stream<double?> get aperturas => _ojos.stream;
+
+  JSArray<JSArray<JSNumber>>? _puntosAnteriores;
+
+  /// Alto entre ancho del ojo, media de los dos. Si la lista de puntos es la
+  /// misma que en el fotograma anterior, WebGazer no ha visto ninguna cara.
+  double? _apertura() {
+    final puntos = _webgazer?.getTracker().getPositions();
+    if (puntos == null || puntos.length < 468) return null;
+    if (identical(puntos, _puntosAnteriores)) return null;
+    _puntosAnteriores = puntos;
+    Offset p(int i) =>
+        Offset(puntos[i][0].toDartDouble, puntos[i][1].toDartDouble);
+    double ojo(int fuera, int dentro, int arriba, int abajo) {
+      final ancho = (p(fuera) - p(dentro)).distance;
+      return ancho == 0 ? 0 : (p(arriba) - p(abajo)).distance / ancho;
+    }
+
+    return (ojo(33, 133, 159, 145) + ojo(263, 362, 386, 374)) / 2;
+  }
 
   Future<void>? _arranque;
 
@@ -104,6 +127,9 @@ class WebGazerGazeSource implements GazeSource {
         .applyKalmanFilter(true)
         .setGazeListener(
           ((_Prediccion? p, JSNumber _) {
+            // La apertura, antes: si los ojos están cerrados, la mirada de
+            // este mismo fotograma no vale.
+            _ojos.add(_apertura());
             if (p != null) _controlador.add(Offset(p.x, p.y));
           }).toJS,
         );

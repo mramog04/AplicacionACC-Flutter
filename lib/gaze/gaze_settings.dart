@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 
 import 'gaze_config.dart';
 import 'gaze_controller.dart';
 import 'gaze_correction.dart';
+import 'gaze_eyes.dart';
 import 'gaze_source.dart';
+import 'sonido_stub.dart' if (dart.library.js_interop) 'sonido_web.dart';
 import 'webgazer_source_stub.dart'
     if (dart.library.js_interop) 'webgazer_source_web.dart';
 
@@ -60,6 +64,76 @@ class GazeSettings extends ChangeNotifier {
     notifyListeners();
   }
 
+  ModoMirada _modo = ModoMirada.mirar;
+  ModoMirada get modo => _modo;
+  set modo(ModoMirada v) {
+    _modo = v;
+    _enPausa = false;
+    _aplicarModo();
+  }
+
+  /// Los modos con los ojos necesitan la cámara; con el ratón se usa «Mirar».
+  ModoMirada get modoEfectivo =>
+      _fuente == FuenteMirada.camara ? _modo : ModoMirada.mirar;
+
+  /// Pulsaciones desactivadas cerrando los ojos.
+  bool _enPausa = false;
+  bool get enPausa => _enPausa;
+
+  /// Para enseñar en Ajustes si la cámara detecta los ojos cerrados.
+  final ojosCerrados = ValueNotifier<bool>(false);
+
+  Object? _objetivoParpadeo;
+  StreamSubscription<double?>? _subOjos;
+  final _relojOjos = Stopwatch();
+  late final gestos = GestosOjos(
+    alMantenerCerrados: () {
+      if (_calibrando || modoEfectivo != ModoMirada.pausaOjos) return;
+      _enPausa = !_enPausa;
+      pitido(_enPausa ? 440 : 880);
+      _aplicarModo();
+    },
+    // Se recuerda el control mirado al empezar: al parpadear la mirada baila.
+    alEmpezarParpadeo: () => _objetivoParpadeo = controlador.bloqueado,
+    alDobleParpadeo: () {
+      final objetivo = _objetivoParpadeo;
+      if (_calibrando ||
+          modoEfectivo != ModoMirada.dobleParpadeo ||
+          objetivo == null) {
+        return;
+      }
+      pitido(660);
+      controlador.activar(objetivo);
+    },
+  );
+
+  void _aplicarModo() {
+    controlador
+      ..reiniciar()
+      ..dwellActivo = modoEfectivo != ModoMirada.dobleParpadeo
+      ..pausado = _calibrando || _enPausa;
+    notifyListeners();
+  }
+
+  void _escucharOjos() {
+    gestos.reiniciar();
+    _relojOjos
+      ..reset()
+      ..start();
+    _subOjos = camara.aperturas.listen((a) {
+      gestos.procesar(a, _relojOjos.elapsed);
+      ojosCerrados.value = gestos.cerrados;
+    });
+  }
+
+  void _dejarDeEscucharOjos() {
+    _subOjos?.cancel();
+    _subOjos = null;
+    gestos.reiniciar();
+    ojosCerrados.value = false;
+    _enPausa = false;
+  }
+
   bool _calibrando = false;
   bool get calibrando => _calibrando;
 
@@ -68,10 +142,7 @@ class GazeSettings extends ChangeNotifier {
   set calibrando(bool v) {
     if (v == _calibrando) return;
     _calibrando = v;
-    controlador
-      ..reiniciar()
-      ..pausado = v;
-    notifyListeners();
+    _aplicarModo();
   }
 
   /// Margen que aparta la app del borde con el modo activo.
@@ -121,14 +192,15 @@ class GazeSettings extends ChangeNotifier {
       _fuente = FuenteMirada.raton;
       await raton.iniciar();
       controlador.escuchar(raton, ajustar: _dentro);
-      notifyListeners();
+      _aplicarModo();
       if (elegida == FuenteMirada.camara) await usarFuente(elegida);
     } else {
       esperandoCamara = false;
       await raton.detener();
       await camara.detener();
       controlador.dejarDeEscuchar();
-      notifyListeners();
+      _dejarDeEscucharOjos();
+      _aplicarModo();
     }
   }
 
@@ -143,11 +215,12 @@ class GazeSettings extends ChangeNotifier {
       esperandoCamara = false;
       await camara.detener();
       _fuente = FuenteMirada.raton;
+      _dejarDeEscucharOjos();
       if (_activo) {
         await raton.iniciar();
         controlador.escuchar(raton, ajustar: _dentro);
       }
-      notifyListeners();
+      _aplicarModo();
       return;
     }
     if (!_activo) {
@@ -179,8 +252,10 @@ class GazeSettings extends ChangeNotifier {
     controlador.escuchar(
       camara,
       ajustar: (m) => _dentro(correccion.aplicar(m)),
+      aceptar: () => gestos.miradaFiable(_relojOjos.elapsed),
     );
-    notifyListeners();
+    _escucharOjos();
+    _aplicarModo();
   }
 }
 

@@ -27,6 +27,9 @@ class CamaraFija implements GazeSource {
   @override
   Future<void> detener() async {}
   @override
+  Stream<double?> get aperturas => ojos.stream;
+  final ojos = StreamController<double?>.broadcast(sync: true);
+  @override
   double? distanciaCm;
   @override
   void empezarCalibracion() {}
@@ -198,7 +201,7 @@ void main() {
       find.bySemanticsLabel(RegExp('^Ajuste de bordes, 1 de 5')),
       findsOne,
     );
-    for (var i = 0; i < 30; i++) {
+    for (var i = 0; i < 40; i++) {
       await tester.pump(const Duration(milliseconds: 500));
     }
     // Sin cámara no hay muestras: termina y lo dice.

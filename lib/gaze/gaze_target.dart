@@ -210,6 +210,8 @@ class CapaMirada extends StatelessWidget {
               Padding(padding: mirada.margen, child: app),
               if (mirada.activo && mirada.mostrarPuntero && !mirada.calibrando)
                 const _PunteroMirada(),
+              if (mirada.activo && mirada.enPausa && !mirada.calibrando)
+                const _AvisoPausa(),
             ],
           ),
           child: child,
@@ -256,6 +258,55 @@ class _PunteroMirada extends StatelessWidget {
                     ),
                   ],
                 ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Aviso de que la mirada no pulsa nada y cómo volver. Se ve (icono y texto)
+/// y se anuncia; deja pasar los toques.
+class _AvisoPausa extends StatelessWidget {
+  const _AvisoPausa();
+
+  static const _texto =
+      'Pulsaciones en pausa. Cierra los ojos hasta oír el pitido para '
+      'reanudarlas.';
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSizes.separacion),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Material(
+              color: AppColors.textoPrincipal,
+              borderRadius: BorderRadius.circular(AppSizes.radio),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: RegionViva(
+                  mensaje: _texto,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.pause_circle, color: AppColors.blanco),
+                      const SizedBox(width: AppSizes.separacion),
+                      Flexible(
+                        child: Text(
+                          _texto,
+                          style: Theme.of(context).textTheme.bodyLarge!
+                              .copyWith(color: AppColors.blanco),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
