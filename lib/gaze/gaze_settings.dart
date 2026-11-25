@@ -117,6 +117,7 @@ class GazeSettings extends ChangeNotifier {
 
   void _escucharOjos() {
     gestos.reiniciar();
+    _crudas.clear();
     _relojOjos
       ..reset()
       ..start();
@@ -132,6 +133,38 @@ class GazeSettings extends ChangeNotifier {
     gestos.reiniciar();
     ojosCerrados.value = false;
     _enPausa = false;
+  }
+
+  /// Últimas estimaciones sin corregir, para el reajuste rápido.
+  final _crudas = <(Duration, Offset)>[];
+
+  Offset _corregir(Offset m) {
+    _crudas.add((_relojOjos.elapsed, m));
+    if (_crudas.length > GazeConfig.muestrasSuavizado) _crudas.removeAt(0);
+    return _dentro(correccion.aplicar(m));
+  }
+
+  /// Ctrl + clic reajusta la mirada (solo con la cámara en marcha).
+  bool get reajustable =>
+      _activo && !_calibrando && _fuente == FuenteMirada.camara;
+
+  /// Reajuste rápido cuando se descalibra: el usuario mira [real] (el puntero
+  /// del ratón) y se desplaza la corrección lo que falte. Devuelve false si
+  /// no hay mirada reciente con la que comparar.
+  bool reajustar(Offset real) {
+    if (!reajustable) return false;
+    final desde = _relojOjos.elapsed - GazeConfig.ventanaReajuste;
+    final recientes = [
+      for (final (t, m) in _crudas)
+        if (t >= desde) m,
+    ];
+    if (recientes.length < GazeConfig.minimoReajuste) return false;
+    final estimada = correccion.aplicar(CorreccionMirada.mediana(recientes));
+    correccion = correccion.desplazada(real - estimada);
+    // El suavizado guarda posiciones con la corrección anterior.
+    controlador.reiniciar();
+    controlador.punto.value = _dentro(real);
+    return true;
   }
 
   bool _calibrando = false;
@@ -251,7 +284,7 @@ class GazeSettings extends ChangeNotifier {
     esperandoCamara = false;
     controlador.escuchar(
       camara,
-      ajustar: (m) => _dentro(correccion.aplicar(m)),
+      ajustar: _corregir,
       aceptar: () => gestos.miradaFiable(_relojOjos.elapsed),
     );
     _escucharOjos();
@@ -259,5 +292,6 @@ class GazeSettings extends ChangeNotifier {
   }
 }
 
-/// Única instancia, compartida por la app.
-final mirada = GazeSettings();
+/// Única instancia, compartida por la app. (Las pruebas la sustituyen para
+/// usar una cámara simulada.)
+GazeSettings mirada = GazeSettings();

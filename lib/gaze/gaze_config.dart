@@ -98,6 +98,11 @@ abstract final class GazeConfig {
   static const double anchoOjosCm = 9;
   static const double anguloCamaraGrados = 65;
 
+  /// Reajuste rápido (Ctrl + clic): se compara con la mirada de este tiempo
+  /// anterior al clic, si hay al menos estas muestras.
+  static const Duration ventanaReajuste = Duration(milliseconds: 800);
+  static const int minimoReajuste = 4;
+
   /// Diámetro del puntero opcional que marca dónde se estima la mirada.
   static const double ladoPuntero = 32;
 

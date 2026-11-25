@@ -259,6 +259,12 @@ class _SeccionMirada extends StatelessWidget {
               onChanged: (v) => mirada.ruidoRaton = v,
             ),
           ] else ...[
+            const Text(
+              'Si la mirada se desvía: mira el puntero del ratón y, sin dejar '
+              'de mirarlo, haz Ctrl + clic. Sirve en cualquier pantalla. Si '
+              'se desvía distinto en cada zona, calibra de nuevo.',
+            ),
+            const SizedBox(height: AppSizes.margen),
             Text('Distancia a la cámara', style: textos.titleSmall),
             const IndicadorDistancia(),
             const SizedBox(height: AppSizes.margen),

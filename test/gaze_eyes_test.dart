@@ -3,6 +3,7 @@
 
 import 'dart:async';
 
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -252,5 +253,94 @@ void main() {
     await expectLater(tester, meetsGuideline(textContrastGuideline));
     mirada.modo = ModoMirada.mirar;
     await mirada.activar(false);
+  });
+
+  group('Reajuste con Ctrl + clic', () {
+    late CamaraOjos camara;
+    late GazeSettings original;
+
+    setUp(() {
+      original = mirada;
+      camara = CamaraOjos();
+      mirada = GazeSettings(disponible: true, camara: camara);
+    });
+    tearDown(() => mirada = original);
+
+    Future<void> preparar(WidgetTester tester) async {
+      await arrancar(tester, ruta: Rutas.lista('1'));
+      await mirada.activar(true);
+      await mirada.usarFuente(FuenteMirada.camara);
+      mirada.mostrarPuntero = true;
+      await asentar(tester);
+    }
+
+    void mirarCrudo(Offset p) {
+      for (var i = 0; i < 14; i++) {
+        camara.m.add(p);
+      }
+    }
+
+    testWidgets('mueve el puntero rojo al ratón y no pulsa lo de debajo', (
+      tester,
+    ) async {
+      await preparar(tester);
+      final boton = find.bySemanticsLabel('+ Añadir producto');
+      final real = tester.getCenter(boton);
+      // Descalibrado: estima 90 px a la izquierda y 70 más arriba.
+      const error = Offset(-90, -70);
+      mirarCrudo(real + error);
+      await tester.pump();
+      final puntero = find.byKey(const ValueKey('puntero-mirada'));
+      expect((tester.getCenter(puntero) - real).distance, greaterThan(100));
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.tapAt(real);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await asentar(tester);
+      expect((tester.getCenter(puntero) - real).distance, lessThan(1));
+      expect(find.bySemanticsLabel('Hecho: Mirada reajustada.'), findsOne);
+      expect(find.bySemanticsLabel('Compra semanal'), findsOne);
+      expect(find.bySemanticsLabel('8 resultados'), findsNothing);
+
+      // Otro punto, con el mismo error, también queda bien.
+      mirarCrudo(const Offset(206, 300) + error);
+      await tester.pump();
+      expect(
+        (tester.getCenter(puntero) - const Offset(206, 300)).distance,
+        lessThan(1),
+      );
+      // Sin Ctrl, el clic pulsa con normalidad.
+      await mirada.activar(false);
+      await asentar(tester);
+      await tester.tap(boton);
+      await asentar(tester);
+      expect(find.bySemanticsLabel('8 resultados'), findsOne);
+    });
+
+    testWidgets('sin mirada reciente avisa y no cambia nada', (tester) async {
+      await preparar(tester);
+      final antes = mirada.correccion;
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.tapAt(const Offset(200, 500));
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await asentar(tester);
+      expect(mirada.correccion, same(antes));
+      expect(
+        find.bySemanticsLabel(RegExp('no se detecta tu mirada')),
+        findsOne,
+      );
+      await mirada.activar(false);
+    });
+
+    testWidgets('con el modo apagado, Ctrl + clic pulsa con normalidad', (
+      tester,
+    ) async {
+      await arrancar(tester, ruta: Rutas.lista('1'));
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.tap(find.bySemanticsLabel('+ Añadir producto'));
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await asentar(tester);
+      expect(find.bySemanticsLabel('8 resultados'), findsOne);
+    });
   });
 }

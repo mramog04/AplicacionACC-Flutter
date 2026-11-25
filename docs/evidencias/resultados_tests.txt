@@ -1,4 +1,4 @@
-# Salida de: flutter test --reporter expanded   (2026-11-25 15:02)
+# Salida de: flutter test --reporter expanded   (2026-11-25 15:13)
 00:00 +0: loading test/widget_test.dart
 00:00 +0: test/widget_test.dart: Navegación por las 7 pantallas
 00:01 +1: test/widget_test.dart: Navegación con texto al 200 % sin desbordes
@@ -8,7 +8,7 @@
 00:04 +4: test/gaze_widget_test.dart: Mirar «Aumentar unidades» 1,5 s hace lo mismo que tocarlo
 00:04 +5: test/gaze_widget_test.dart: Recorrido 2 completo con la mirada
 00:05 +6: test/gaze_widget_test.dart: «Borrar lista» por mirada necesita un segundo paso
-00:05 +7: test/gaze_widget_test.dart: Con el modo mirada, −/+ más grandes y separados; guías OK
+00:06 +7: test/gaze_widget_test.dart: Con el modo mirada, −/+ más grandes y separados; guías OK
 00:06 +8: test/gaze_widget_test.dart: El modo agranda los botones sin cambiarles el ancho
 00:06 +9: test/gaze_widget_test.dart: Mis listas (móvil): controles de mirada separados
 00:06 +10: test/gaze_widget_test.dart: Nueva lista (móvil): controles de mirada separados
@@ -20,7 +20,7 @@
 00:06 +16: test/gaze_widget_test.dart: Nueva lista (escritorio): controles de mirada separados
 00:06 +17: test/gaze_widget_test.dart: Lista (escritorio): controles de mirada separados
 00:06 +18: test/gaze_widget_test.dart: Modo compra (escritorio): controles de mirada separados
-00:06 +19: test/gaze_widget_test.dart: Buscar (escritorio): controles de mirada separados
+00:07 +19: test/gaze_widget_test.dart: Buscar (escritorio): controles de mirada separados
 00:07 +20: test/gaze_widget_test.dart: Detalle (escritorio): controles de mirada separados
 00:07 +21: test/gaze_widget_test.dart: Recorrido 3 con temblor, de casilla en casilla sin apartar la vista
 00:07 +22: test/gaze_widget_test.dart: Lo que no cabe se alcanza con «Bajar» y «Subir» por mirada
@@ -28,7 +28,7 @@
 00:07 +24: test/gaze_widget_test.dart: Lista: unos 250 px entre filas vecinas
 00:07 +25: test/gaze_widget_test.dart: Buscar: unos 250 px entre filas vecinas
 00:07 +26: test/gaze_widget_test.dart: − y + centrados y separados (ancho 1280.0)
-00:07 +27: test/gaze_widget_test.dart: − y + centrados y separados (ancho 412.0)
+00:08 +27: test/gaze_widget_test.dart: − y + centrados y separados (ancho 412.0)
 00:08 +28: loading test/gaze_settings_test.dart
 00:08 +28: test/gaze_settings_test.dart: Desactivado por defecto
 00:08 +29: test/gaze_settings_test.dart: Mientras se espera el permiso se usa el ratón y se indica
@@ -42,105 +42,108 @@
 00:10 +36: test/recorridos_test.dart: Recorrido 3: hacer la compra (texto ×1.0)
 00:11 +37: test/recorridos_test.dart: Recorrido 1: crear lista (texto ×2.0)
 00:11 +38: test/recorridos_test.dart: Recorrido 2: añadir producto (texto ×2.0)
-00:11 +39: test/recorridos_test.dart: Recorrido 3: hacer la compra (texto ×2.0)
+00:12 +39: test/recorridos_test.dart: Recorrido 3: hacer la compra (texto ×2.0)
 00:12 +40: test/recorridos_test.dart: Recorrido 1: crear lista (texto ×3.0)
 00:12 +41: test/recorridos_test.dart: Recorrido 2: añadir producto (texto ×3.0)
 00:13 +42: test/recorridos_test.dart: Recorrido 3: hacer la compra (texto ×3.0)
-00:13 +43: test/recorridos_test.dart: Producto repetido: aviso y ficha con sus unidades
+00:14 +43: test/recorridos_test.dart: Producto repetido: aviso y ficha con sus unidades
 00:14 +44: test/recorridos_test.dart: Borrar lista pide confirmación
 00:14 +45: test/recorridos_test.dart: Lista vacía: «Terminar lista» deshabilitado y explicado
 00:14 +46: loading test/gaze_eyes_test.dart
-00:14 +46: test/gaze_eyes_test.dart: Mantener los ojos cerrados salta una sola vez por cierre
-00:14 +47: test/gaze_eyes_test.dart: Un parpadeo normal no hace nada
-00:14 +48: test/gaze_eyes_test.dart: Dos parpadeos rápidos seguidos son un doble parpadeo
-00:14 +49: test/gaze_eyes_test.dart: Dos parpadeos separados, o uno largo y otro corto, no lo son
-00:14 +50: test/gaze_eyes_test.dart: Mirar hacia abajo no se confunde con cerrar los ojos
-00:14 +51: test/gaze_eyes_test.dart: Si no se distinguen, no hay umbral personal
-00:14 +52: test/gaze_eyes_test.dart: Perder la cara no cuenta como ojos cerrados
-00:14 +53: test/gaze_eyes_test.dart: Con los ojos cerrados o recién abiertos la mirada no vale
-00:14 +54: test/gaze_eyes_test.dart: En los ajustes modo mirar: cerrar los ojos no pausa
-00:14 +55: test/gaze_eyes_test.dart: En los ajustes modo con pausa: pausar, no pulsa; reanudar, pulsa
-00:14 +56: test/gaze_eyes_test.dart: En los ajustes doble parpadeo: mirar no pulsa, parpadear sí
-00:14 +57: test/gaze_eyes_test.dart: En los ajustes doble parpadeo sin mirar ningún botón no hace nada
-00:14 +58: test/gaze_eyes_test.dart: En los ajustes con el ratón se usa «mirar» y la pausa se quita
-00:14 +59: test/gaze_eyes_test.dart: En los ajustes la cámara entrega la apertura de los ojos
-00:14 +60: test/gaze_eyes_test.dart: Los tres modos están en Ajustes, con su explicación
-00:16 +61: loading test/gaze_correction_test.dart
-00:16 +61: test/gaze_correction_test.dart: La corrección deshace una mirada encogida y desplazada
-00:16 +62: test/gaze_correction_test.dart: Sin datos fiables no corrige
-00:16 +63: test/gaze_correction_test.dart: La mediana ignora un valor atípico
-00:16 +64: test/gaze_correction_test.dart: Una estimación fuera de la pantalla cuenta como el borde
-00:16 +65: test/gaze_correction_test.dart: El margen solo se aplica con el modo activo, ancho y sin calibrar
-00:16 +66: test/gaze_correction_test.dart: Distancia: el doble de separación entre los ojos, la mitad
-00:16 +67: test/gaze_correction_test.dart: El puntero solo aparece si se pide y sigue a la mirada
-00:17 +68: test/gaze_correction_test.dart: La calibración llega a las cuatro esquinas y termina
-00:18 +69: loading test/escalado_test.dart
-00:18 +69: test/escalado_test.dart: Carga sin desbordes y completa (texto ×2.0)
-00:19 +70: test/escalado_test.dart: Mis listas sin desbordes y completa (texto ×2.0)
-00:19 +71: test/escalado_test.dart: Nueva lista sin desbordes y completa (texto ×2.0)
-00:19 +72: test/escalado_test.dart: Lista sin desbordes y completa (texto ×2.0)
-00:20 +73: test/escalado_test.dart: Buscar producto sin desbordes y completa (texto ×2.0)
-00:20 +74: test/escalado_test.dart: Detalle de producto sin desbordes y completa (texto ×2.0)
-00:20 +75: test/escalado_test.dart: Ajustes sin desbordes y completa (texto ×2.0)
-00:20 +76: test/escalado_test.dart: Carga sin desbordes y completa (texto ×3.0)
-00:20 +77: test/escalado_test.dart: Mis listas sin desbordes y completa (texto ×3.0)
-00:20 +78: test/escalado_test.dart: Nueva lista sin desbordes y completa (texto ×3.0)
-00:20 +79: test/escalado_test.dart: Lista sin desbordes y completa (texto ×3.0)
-00:21 +80: test/escalado_test.dart: Buscar producto sin desbordes y completa (texto ×3.0)
-00:21 +81: test/escalado_test.dart: Detalle de producto sin desbordes y completa (texto ×3.0)
-00:21 +82: test/escalado_test.dart: Ajustes sin desbordes y completa (texto ×3.0)
-00:21 +83: loading test/gaze_controller_test.dart
-00:22 +83: test/gaze_controller_test.dart: Bloquea el control más cercano dentro del radio de entrada
-00:22 +84: test/gaze_controller_test.dart: El ruido dentro del radio de salida no cambia el objetivo
-00:22 +85: test/gaze_controller_test.dart: Se suelta solo tras el tiempo de gracia fuera del radio de salida
-00:22 +86: test/gaze_controller_test.dart: Una salida breve (parpadeo) no suelta el objetivo
-00:22 +87: test/gaze_controller_test.dart: El dwell activa el control una sola vez hasta soltarlo
-00:22 +88: test/gaze_controller_test.dart: El dwell se reinicia al cambiar de objetivo
-00:22 +89: test/gaze_controller_test.dart: Durante la gracia el dwell no avanza
-00:22 +90: test/gaze_controller_test.dart: El suavizado (media de 12) filtra una muestra aislada lejana
-00:22 +91: test/gaze_controller_test.dart: En pausa (calibración) no bloquea ni activa
-00:22 +92: test/gaze_controller_test.dart: Un control que deja de verse (rect null) no se bloquea
-00:22 +93: test/gaze_controller_test.dart: Controles vecinos (a 50 px, dentro del radio de salida) se pasa al vecino mirándolo, sin apartar antes la vista
-00:22 +94: test/gaze_controller_test.dart: Controles vecinos (a 50 px, dentro del radio de salida) mientras se mira al vecino, el dwell del bloqueado se congela
-00:22 +95: test/gaze_controller_test.dart: Controles vecinos (a 50 px, dentro del radio de salida) un vistazo breve al vecino no cambia el objetivo
-00:22 +96: test/gaze_controller_test.dart: Controles vecinos (a 50 px, dentro del radio de salida) mirar justo entre los dos no elige ninguno
-00:22 +97: test/gaze_controller_test.dart: Controles vecinos (a 50 px, dentro del radio de salida) un control pequeño encima de otro grande gana
-00:22 +98: test/gaze_controller_test.dart: Si el control bloqueado deja de verse, se suelta sin gracia
-00:22 +99: test/gaze_controller_test.dart: Un salto de la vista no bloquea los controles intermedios
-00:22 +100: test/gaze_controller_test.dart: Tras activar, no se activa solo lo que quede bajo la vista
-00:22 +101: loading test/guias_test.dart
-00:23 +101: test/guias_test.dart: Carga cumple las guías (texto ×1.0)
-00:23 +102: test/guias_test.dart: Mis listas cumple las guías (texto ×1.0)
-00:23 +103: test/guias_test.dart: Nueva lista cumple las guías (texto ×1.0)
-00:23 +104: test/guias_test.dart: Nueva lista con error cumple las guías (texto ×1.0)
-00:24 +105: test/guias_test.dart: Lista cumple las guías (texto ×1.0)
-00:24 +106: test/guias_test.dart: Lista: diálogo de borrar cumple las guías (texto ×1.0)
-00:24 +107: test/guias_test.dart: Lista: modo compra cumple las guías (texto ×1.0)
-00:24 +108: test/guias_test.dart: Lista: compra completada cumple las guías (texto ×1.0)
-00:24 +109: test/guias_test.dart: Buscar producto cumple las guías (texto ×1.0)
-00:24 +110: test/guias_test.dart: Detalle (producto nuevo) cumple las guías (texto ×1.0)
-00:24 +111: test/guias_test.dart: Detalle (producto en la lista) cumple las guías (texto ×1.0)
-00:24 +112: test/guias_test.dart: Ajustes cumple las guías (texto ×1.0)
-00:24 +113: test/guias_test.dart: Carga cumple las guías (texto ×2.0)
-00:25 +114: test/guias_test.dart: Mis listas cumple las guías (texto ×2.0)
-00:25 +115: test/guias_test.dart: Nueva lista cumple las guías (texto ×2.0)
-00:25 +116: test/guias_test.dart: Nueva lista con error cumple las guías (texto ×2.0)
-00:25 +117: test/guias_test.dart: Lista cumple las guías (texto ×2.0)
-00:25 +118: test/guias_test.dart: Lista: diálogo de borrar cumple las guías (texto ×2.0)
-00:25 +119: test/guias_test.dart: Lista: modo compra cumple las guías (texto ×2.0)
-00:25 +120: test/guias_test.dart: Lista: compra completada cumple las guías (texto ×2.0)
-00:25 +121: test/guias_test.dart: Buscar producto cumple las guías (texto ×2.0)
-00:25 +122: test/guias_test.dart: Detalle (producto nuevo) cumple las guías (texto ×2.0)
-00:25 +123: test/guias_test.dart: Detalle (producto en la lista) cumple las guías (texto ×2.0)
-00:25 +124: test/guias_test.dart: Ajustes cumple las guías (texto ×2.0)
-00:25 +125: loading test/semantica_test.dart
-00:26 +125: test/semantica_test.dart: Sin anuncios de plataforma: regiones vivas error de nombre vacío
-00:27 +126: test/semantica_test.dart: Sin anuncios de plataforma: regiones vivas número de resultados y subtotal
-00:27 +127: test/semantica_test.dart: Sin anuncios de plataforma: regiones vivas modo compra y compra completada
-00:27 +128: test/semantica_test.dart: El error no mueve el foco
-00:27 +129: test/semantica_test.dart: Cada pantalla tiene un único título h1 que nombra la ruta
-00:28 +130: test/semantica_test.dart: El valor «Unidades» se ajusta con deslizar arriba/abajo
-00:28 +131: test/semantica_test.dart: Orden de lectura: detalle de producto
-00:28 +132: test/semantica_test.dart: Orden de lectura: lista en modo compra
-00:28 +133: test/semantica_test.dart: Los iconos decorativos no generan nodos
-00:28 +134: All tests passed!
+00:15 +46: test/gaze_eyes_test.dart: Mantener los ojos cerrados salta una sola vez por cierre
+00:15 +47: test/gaze_eyes_test.dart: Un parpadeo normal no hace nada
+00:15 +48: test/gaze_eyes_test.dart: Dos parpadeos rápidos seguidos son un doble parpadeo
+00:15 +49: test/gaze_eyes_test.dart: Dos parpadeos separados, o uno largo y otro corto, no lo son
+00:15 +50: test/gaze_eyes_test.dart: Mirar hacia abajo no se confunde con cerrar los ojos
+00:15 +51: test/gaze_eyes_test.dart: Si no se distinguen, no hay umbral personal
+00:15 +52: test/gaze_eyes_test.dart: Perder la cara no cuenta como ojos cerrados
+00:15 +53: test/gaze_eyes_test.dart: Con los ojos cerrados o recién abiertos la mirada no vale
+00:15 +54: test/gaze_eyes_test.dart: En los ajustes modo mirar: cerrar los ojos no pausa
+00:15 +55: test/gaze_eyes_test.dart: En los ajustes modo con pausa: pausar, no pulsa; reanudar, pulsa
+00:15 +56: test/gaze_eyes_test.dart: En los ajustes doble parpadeo: mirar no pulsa, parpadear sí
+00:15 +57: test/gaze_eyes_test.dart: En los ajustes doble parpadeo sin mirar ningún botón no hace nada
+00:15 +58: test/gaze_eyes_test.dart: En los ajustes con el ratón se usa «mirar» y la pausa se quita
+00:15 +59: test/gaze_eyes_test.dart: En los ajustes la cámara entrega la apertura de los ojos
+00:15 +60: test/gaze_eyes_test.dart: Los tres modos están en Ajustes, con su explicación
+00:16 +61: test/gaze_eyes_test.dart: Reajuste con Ctrl + clic mueve el puntero rojo al ratón y no pulsa lo de debajo
+00:16 +62: test/gaze_eyes_test.dart: Reajuste con Ctrl + clic sin mirada reciente avisa y no cambia nada
+00:16 +63: test/gaze_eyes_test.dart: Reajuste con Ctrl + clic con el modo apagado, Ctrl + clic pulsa con normalidad
+00:17 +64: loading test/gaze_correction_test.dart
+00:17 +64: test/gaze_correction_test.dart: La corrección deshace una mirada encogida y desplazada
+00:17 +65: test/gaze_correction_test.dart: Sin datos fiables no corrige
+00:17 +66: test/gaze_correction_test.dart: La mediana ignora un valor atípico
+00:17 +67: test/gaze_correction_test.dart: Una estimación fuera de la pantalla cuenta como el borde
+00:17 +68: test/gaze_correction_test.dart: El margen solo se aplica con el modo activo, ancho y sin calibrar
+00:17 +69: test/gaze_correction_test.dart: Distancia: el doble de separación entre los ojos, la mitad
+00:17 +70: test/gaze_correction_test.dart: El puntero solo aparece si se pide y sigue a la mirada
+00:18 +71: test/gaze_correction_test.dart: La calibración llega a las cuatro esquinas y termina
+00:19 +72: loading test/escalado_test.dart
+00:19 +72: test/escalado_test.dart: Carga sin desbordes y completa (texto ×2.0)
+00:20 +73: test/escalado_test.dart: Mis listas sin desbordes y completa (texto ×2.0)
+00:20 +74: test/escalado_test.dart: Nueva lista sin desbordes y completa (texto ×2.0)
+00:20 +75: test/escalado_test.dart: Lista sin desbordes y completa (texto ×2.0)
+00:20 +76: test/escalado_test.dart: Buscar producto sin desbordes y completa (texto ×2.0)
+00:21 +77: test/escalado_test.dart: Detalle de producto sin desbordes y completa (texto ×2.0)
+00:21 +78: test/escalado_test.dart: Ajustes sin desbordes y completa (texto ×2.0)
+00:21 +79: test/escalado_test.dart: Carga sin desbordes y completa (texto ×3.0)
+00:21 +80: test/escalado_test.dart: Mis listas sin desbordes y completa (texto ×3.0)
+00:21 +81: test/escalado_test.dart: Nueva lista sin desbordes y completa (texto ×3.0)
+00:21 +82: test/escalado_test.dart: Lista sin desbordes y completa (texto ×3.0)
+00:22 +83: test/escalado_test.dart: Buscar producto sin desbordes y completa (texto ×3.0)
+00:22 +84: test/escalado_test.dart: Detalle de producto sin desbordes y completa (texto ×3.0)
+00:22 +85: test/escalado_test.dart: Ajustes sin desbordes y completa (texto ×3.0)
+00:22 +86: loading test/gaze_controller_test.dart
+00:23 +86: test/gaze_controller_test.dart: Bloquea el control más cercano dentro del radio de entrada
+00:23 +87: test/gaze_controller_test.dart: El ruido dentro del radio de salida no cambia el objetivo
+00:23 +88: test/gaze_controller_test.dart: Se suelta solo tras el tiempo de gracia fuera del radio de salida
+00:23 +89: test/gaze_controller_test.dart: Una salida breve (parpadeo) no suelta el objetivo
+00:23 +90: test/gaze_controller_test.dart: El dwell activa el control una sola vez hasta soltarlo
+00:23 +91: test/gaze_controller_test.dart: El dwell se reinicia al cambiar de objetivo
+00:23 +92: test/gaze_controller_test.dart: Durante la gracia el dwell no avanza
+00:23 +93: test/gaze_controller_test.dart: El suavizado (media de 12) filtra una muestra aislada lejana
+00:23 +94: test/gaze_controller_test.dart: En pausa (calibración) no bloquea ni activa
+00:23 +95: test/gaze_controller_test.dart: Un control que deja de verse (rect null) no se bloquea
+00:23 +96: test/gaze_controller_test.dart: Controles vecinos (a 50 px, dentro del radio de salida) se pasa al vecino mirándolo, sin apartar antes la vista
+00:23 +97: test/gaze_controller_test.dart: Controles vecinos (a 50 px, dentro del radio de salida) mientras se mira al vecino, el dwell del bloqueado se congela
+00:23 +98: test/gaze_controller_test.dart: Controles vecinos (a 50 px, dentro del radio de salida) un vistazo breve al vecino no cambia el objetivo
+00:23 +99: test/gaze_controller_test.dart: Controles vecinos (a 50 px, dentro del radio de salida) mirar justo entre los dos no elige ninguno
+00:23 +100: test/gaze_controller_test.dart: Controles vecinos (a 50 px, dentro del radio de salida) un control pequeño encima de otro grande gana
+00:23 +101: test/gaze_controller_test.dart: Si el control bloqueado deja de verse, se suelta sin gracia
+00:23 +102: test/gaze_controller_test.dart: Un salto de la vista no bloquea los controles intermedios
+00:23 +103: test/gaze_controller_test.dart: Tras activar, no se activa solo lo que quede bajo la vista
+00:23 +104: loading test/guias_test.dart
+00:24 +104: test/guias_test.dart: Carga cumple las guías (texto ×1.0)
+00:24 +105: test/guias_test.dart: Mis listas cumple las guías (texto ×1.0)
+00:24 +106: test/guias_test.dart: Nueva lista cumple las guías (texto ×1.0)
+00:25 +107: test/guias_test.dart: Nueva lista con error cumple las guías (texto ×1.0)
+00:25 +108: test/guias_test.dart: Lista cumple las guías (texto ×1.0)
+00:25 +109: test/guias_test.dart: Lista: diálogo de borrar cumple las guías (texto ×1.0)
+00:25 +110: test/guias_test.dart: Lista: modo compra cumple las guías (texto ×1.0)
+00:25 +111: test/guias_test.dart: Lista: compra completada cumple las guías (texto ×1.0)
+00:25 +112: test/guias_test.dart: Buscar producto cumple las guías (texto ×1.0)
+00:25 +113: test/guias_test.dart: Detalle (producto nuevo) cumple las guías (texto ×1.0)
+00:25 +114: test/guias_test.dart: Detalle (producto en la lista) cumple las guías (texto ×1.0)
+00:26 +115: test/guias_test.dart: Ajustes cumple las guías (texto ×1.0)
+00:26 +116: test/guias_test.dart: Carga cumple las guías (texto ×2.0)
+00:26 +117: test/guias_test.dart: Mis listas cumple las guías (texto ×2.0)
+00:26 +118: test/guias_test.dart: Nueva lista cumple las guías (texto ×2.0)
+00:26 +119: test/guias_test.dart: Nueva lista con error cumple las guías (texto ×2.0)
+00:26 +120: test/guias_test.dart: Lista cumple las guías (texto ×2.0)
+00:26 +121: test/guias_test.dart: Lista: diálogo de borrar cumple las guías (texto ×2.0)
+00:26 +122: test/guias_test.dart: Lista: modo compra cumple las guías (texto ×2.0)
+00:26 +123: test/guias_test.dart: Lista: compra completada cumple las guías (texto ×2.0)
+00:26 +124: test/guias_test.dart: Buscar producto cumple las guías (texto ×2.0)
+00:26 +125: test/guias_test.dart: Detalle (producto nuevo) cumple las guías (texto ×2.0)
+00:26 +126: test/guias_test.dart: Detalle (producto en la lista) cumple las guías (texto ×2.0)
+00:26 +127: test/guias_test.dart: Ajustes cumple las guías (texto ×2.0)
+00:26 +128: loading test/semantica_test.dart
+00:27 +128: test/semantica_test.dart: Sin anuncios de plataforma: regiones vivas error de nombre vacío
+00:28 +129: test/semantica_test.dart: Sin anuncios de plataforma: regiones vivas número de resultados y subtotal
+00:28 +130: test/semantica_test.dart: Sin anuncios de plataforma: regiones vivas modo compra y compra completada
+00:29 +131: test/semantica_test.dart: El error no mueve el foco
+00:29 +132: test/semantica_test.dart: Cada pantalla tiene un único título h1 que nombra la ruta
+00:29 +133: test/semantica_test.dart: El valor «Unidades» se ajusta con deslizar arriba/abajo
+00:29 +134: test/semantica_test.dart: Orden de lectura: detalle de producto
+00:29 +135: test/semantica_test.dart: Orden de lectura: lista en modo compra
+00:29 +136: test/semantica_test.dart: Los iconos decorativos no generan nodos
+00:30 +137: All tests passed!

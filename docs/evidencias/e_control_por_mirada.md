@@ -60,6 +60,8 @@ Es un modo **solo para Flutter web**, que viene **desactivado por defecto**. Se 
 
     Los ojos cerrados se detectan con la apertura de los párpados (malla de WebGazer). La calibración mide los ojos de cada persona cerrados y mirando abajo, para no confundirlos. Con los ojos cerrados o recién abiertos se ignora la mirada. Si se pierde la cara, no cuenta. **Comprobado con ojos simulados; con personas, pendiente.** Puede no servir a quien parpadea de forma involuntaria o no controla los párpados: por eso «Mirar» sigue siendo el modo por defecto.
 
+11. **Reajuste rápido: Ctrl + clic.** Si la mirada se descalibra un poco, se mira el puntero del ratón y se hace Ctrl + clic: la corrección se desplaza lo que falte. Ese clic no pulsa lo que haya debajo. Es un desplazamiento igual en toda la pantalla; si el error cambia según la zona, hay que calibrar. Necesita ratón y teclado, así que no sustituye a la calibración. **Comprobado con mirada simulada.**
+
 Son constantes o código aislado en `gaze_controller.dart` y tienen su prueba en `test/gaze_controller_test.dart`.
 
 ## Accesibilidad y seguridad
@@ -112,6 +114,6 @@ cd build/web && python3 -m http.server 8765    # o: flutter run -d chrome
 |---|---|
 | `test/gaze_controller_test.dart` | Bloqueo dentro del radio de entrada. El ruido de hasta 150 px no cambia el objetivo. Se suelta solo tras la gracia; un parpadeo no lo suelta. El dwell activa una vez, se reinicia al cambiar de objetivo y se congela en la gracia. Suavizado y valores atípicos, pausa, salto de la vista, rearme tras activar, y paso entre controles vecinos (cambio, congelado, vistazo breve, duda entre dos). |
 | `test/gaze_correction_test.dart` | Corrección de una mirada encogida; datos no fiables; estimación fuera de la pantalla; margen; calibración hasta las cuatro esquinas. |
-| `test/gaze_eyes_test.dart` | Ojos cerrados mantenidos, parpadeo normal, doble parpadeo, mirar abajo, pérdida de la cara y los tres modos. |
+| `test/gaze_eyes_test.dart` | Ojos cerrados mantenidos, parpadeo normal, doble parpadeo, mirar abajo, pérdida de la cara, los tres modos y el reajuste con Ctrl + clic. |
 | `test/gaze_settings_test.dart` | Desactivado por defecto; espera del permiso; permiso concedido tarde tras volver al ratón; fallo con motivo; apagado de la cámara. |
 | `test/gaze_widget_test.dart` | Activación desde Ajustes con aviso de privacidad y uso del ratón cuando no hay cámara; «Aumentar unidades» por mirada con su anuncio; recorrido 2 completo por mirada; «Borrar lista» en dos pasos; guías con el modo activo; separación real en 6 pantallas (móvil y escritorio); recorrido 3 con temblor de casilla en casilla; «Subir»/«Bajar». |

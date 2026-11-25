@@ -18,6 +18,10 @@ class CorreccionMirada {
 
   Offset aplicar(Offset p) => Offset(ax * p.dx + bx, ay * p.dy + by);
 
+  /// La misma corrección, desplazada [d].
+  CorreccionMirada desplazada(Offset d) =>
+      CorreccionMirada(ax: ax, bx: bx + d.dx, ay: ay, by: by + d.dy);
+
   /// Ajusta con pares (punto real, mirada medida). Con menos de 3 pares, o en
   /// un eje sin variación suficiente, no corrige.
   static CorreccionMirada ajustar(List<(Offset, Offset)> pares) {

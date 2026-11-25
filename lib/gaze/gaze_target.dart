@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 
 import '../theme.dart';
 import '../widgets/avisos.dart';
@@ -188,6 +190,18 @@ class CapaMirada extends StatelessWidget {
 
   final Widget child;
 
+  void _reajustar(BuildContext context, Offset posicion) {
+    if (mirada.reajustar(posicion)) {
+      mostrarAviso(context, 'Mirada reajustada.');
+    } else {
+      mostrarAviso(
+        context,
+        'No se ha podido reajustar: no se detecta tu mirada.',
+        tipo: TipoAviso.informacion,
+      );
+    }
+  }
+
   void _puntero(PointerEvent e) {
     if (mirada.activo) mirada.raton.actualizarPuntero(e.position);
   }
@@ -199,7 +213,10 @@ class CapaMirada extends StatelessWidget {
       behavior: HitTestBehavior.translucent,
       onPointerHover: _puntero,
       onPointerMove: _puntero,
-      onPointerDown: _puntero,
+      onPointerDown: (e) {
+        _puntero(e);
+        if (_esReajuste) _reajustar(context, e.position);
+      },
       child: ColoredBox(
         color: AppColors.fondoBarras,
         child: ListenableBuilder(
@@ -207,7 +224,9 @@ class CapaMirada extends StatelessWidget {
           builder: (context, app) => Stack(
             fit: StackFit.expand,
             children: [
-              Padding(padding: mirada.margen, child: app),
+              _FiltroReajuste(
+                child: Padding(padding: mirada.margen, child: app),
+              ),
               if (mirada.activo && mirada.mostrarPuntero && !mirada.calibrando)
                 const _PunteroMirada(),
               if (mirada.activo && mirada.enPausa && !mirada.calibrando)
@@ -311,4 +330,26 @@ class _AvisoPausa extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Ctrl pulsado y la cámara en marcha: el clic es para reajustar la mirada.
+bool get _esReajuste =>
+    mirada.reajustable && HardwareKeyboard.instance.isControlPressed;
+
+/// Se queda con el Ctrl + clic de reajuste para que no llegue al control que
+/// haya debajo. El resto de toques pasan igual.
+class _FiltroReajuste extends SingleChildRenderObjectWidget {
+  const _FiltroReajuste({required super.child});
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderFiltroReajuste();
+}
+
+class _RenderFiltroReajuste extends RenderProxyBox {
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) =>
+      _esReajuste
+      ? size.contains(position)
+      : super.hitTest(result, position: position);
 }
